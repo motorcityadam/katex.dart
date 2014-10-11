@@ -1,0 +1,27 @@
+{
+  "name": "katex-dart",
+  "version": "0.0.0",
+  "description": "Fast math typesetting for the web, ported to Dart.",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/adamjcook/katex.dart.git"
+  },
+  "devDependencies": {
+    "karma" : "~0.12.0",
+    "karma-dart" : "~0.2.8",
+    "karma-sauce-launcher": "^0.2.3",
+    "karma-script-launcher": "*",
+    "karma-chrome-launcher": "~0.1.3",
+    "karma-firefox-launcher": "*",
+    "karma-junit-reporter": "~0.2.1",
+    "jasmine-node": "*",
+    "jasmine-reporters": "~0.4.1",
+    "protractor-dart": "0.0.5",
+    "qq": "*"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/adamjcook/katex.dart/issues"
+  },
+  "homepage": "https://github.com/adamjcook/katex.dart"
+}
