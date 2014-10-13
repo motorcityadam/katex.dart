@@ -1,4 +1,4 @@
-library katex;
+library katex_demo;
 
 import 'dart:html'
 	show ButtonElement, Element, HashChangeEvent, InputElement, querySelector, window;

@@ -8,17 +8,20 @@ import 'build_tree.dart';
 import 'delimiters.dart' as delimiters;
 import 'dom_node.dart';
 import 'font_metrics.dart' as fontMetrics;
+import 'functions.dart';
 import 'options.dart';
 import 'parse_node.dart';
 import 'styles.dart' as styles;
+import 'tex_function.dart';
+import 'tex_style.dart';
 
 
 // TODO(adamjcook): Add class description.
 class TexGroup {
 
-    final String type;
+    String type;
     final ParseNode group;
-    final Options options; 
+    final Options options;
     final ParseNode prev;
 
     DomNode value;
@@ -28,7 +31,7 @@ class TexGroup {
         ParseNode group,
         Options options,
         ParseNode prev } )
-    : this._init( 
+    : this._init(
         type: type,
         group: group,
         options: options,
@@ -48,6 +51,10 @@ class TexGroup {
         bool isCharacterBox ( { ParseNode group } ) {
 
             ParseNode baseElem = getBaseElem( group: group );
+
+            if ( baseElem == null ) {
+              return null;
+            }
 
             // These are all they types of groups which hold single characters
             return baseElem.type == 'mathord' ||
@@ -120,10 +127,10 @@ class TexGroup {
             // Pull out the most recent element. Do some special handling to find
             // things at the end of a \color group. Note that we don't use the same
             // logic for ordgroups (which count as ords).
-            var prevAtom = prev;
-            while ( prevAtom && prevAtom.type == 'color' ) {
+            ParseNode prevAtom = prev;
+            while ( prevAtom != null && prevAtom.type == 'color' ) {
 
-                var atoms = prevAtom.value.value;
+                List<ParseNode> atoms = prevAtom.value[ 'value' ];
                 prevAtom = atoms[ atoms.length - 1 ];
 
             }
@@ -208,15 +215,15 @@ class TexGroup {
         } else if ( type == 'color' ) {
 
             List<DomNode> elements = buildExpression(
-                                expression: group.value.value,
-                                options: options.withColor( group.value.color ),
+                                expression: group.value[ 'value' ],
+                                options: options.withColor( group.value[ 'color' ] ),
                                 prev: prev );
 
             // \color isn't supposed to affect the type of the elements it
             // contains. To accomplish this, we wrap the results in a fragment,
             // so the inner elements will be able to directly interact with
             // their neighbors.
-            // 
+            //
             // For example,
             // `\color{red}{2 +} 3` has the same spacing as `2 + 3`
             value = buildCommon.makeFragment( children: elements );
@@ -230,15 +237,16 @@ class TexGroup {
             DomNode sub;
             SpanNode supmid;
             DomNode sup;
+            TexFunction groupTypeFunc;
 
             // Here is where we defer to the inner group if it should handle
             // superscripts and subscripts itself.
             if ( shouldHandleSupSub( group: group.value[ 'base' ],
                                      options: options ) ) {
 
-                // TODO(adamjcook): Change this!!, object literals do not exist in Dart.
-                var groupTypeFunc = groupTypes[ group.value[ 'base' ].type ];
-                value = groupTypeFunc( group, options, prev );
+              type = group.value[ 'base' ].type;
+//                groupTypeFunc = groupTypes[ group.value[ 'base' ].type ];
+//                value = Function.apply( groupTypeFunc.handler, [ group, options, prev ] );
 
             }
 
@@ -275,7 +283,7 @@ class TexGroup {
             num supShift;
             num subShift;
 
-            if ( isCharacterBox( group: group.value[ 'base' ] ) ) {
+            if ( isCharacterBox( group: group.value[ 'base' ] ) != null ) {
 
                 supShift = 0;
                 subShift = 0;
@@ -321,7 +329,7 @@ class TexGroup {
                             positionData: subShift,
                             options: options );
 
-                ( supsub.children[0] as SpanNode ).styles[ 'margin-right' ] =
+                supsub.children[0].styles[ 'margin-right' ] =
                                                                     scriptspace;
 
                 // Subscripts shouldn't be shifted by the base's italic correction.
@@ -329,7 +337,7 @@ class TexGroup {
                 // amount. Note we only do this when the base is a single symbol.
                 if ( base is SymbolNode ) {
 
-                    ( supsub.children[0] as SpanNode ).styles[ 'margin-left' ] =
+                    supsub.children[0].styles[ 'margin-left' ] =
                         ( -base.italic ).toString() + 'em';
 
                 }
@@ -347,8 +355,7 @@ class TexGroup {
                             positionData: -supShift,
                             options: options );
 
-                ( supsub.children[0] as SpanNode )
-                                        .styles[ 'margin-right' ] = scriptspace;
+                supsub.children[0].styles[ 'margin-right' ] = scriptspace;
 
             } else {
 
@@ -385,16 +392,14 @@ class TexGroup {
                 // See comment above about subscripts not being shifted
                 if ( base is SymbolNode ) {
 
-                    ( supsub.children[ 0 ] as SpanNode )
+                    supsub.children[ 0 ]
                         .styles[ 'margin-left' ] = ( -base.italic ).toString() + 'em';
 
                 }
 
-                ( supsub.children[ 0 ] as SpanNode )
-                                        .styles[ 'margin-right' ] = scriptspace;
+                supsub.children[ 0 ].styles[ 'margin-right' ] = scriptspace;
 
-                ( supsub.children[ 1 ] as SpanNode )
-                                        .styles[ 'margin-right' ] = scriptspace;
+                supsub.children[ 1 ].styles[ 'margin-right' ] = scriptspace;
 
             }
 
@@ -619,12 +624,12 @@ class TexGroup {
             num baseShift = 0;
             num slant = 0;
 
-            if ( group.value.symbol ) {
+            if ( group.value[ 'symbol' ] ) {
 
                 // If this is a symbol, create the symbol.
                 String style = large ? 'Size2-Regular' : 'Size1-Regular';
                 base = buildCommon.makeSymbol(
-                    value: group.value.body,
+                    value: group.value[ 'body' ],
                     style: style,
                     mode: 'math',
                     color: options.getColor(),
@@ -640,7 +645,7 @@ class TexGroup {
                     options.style.sizeMultiplier;
 
                 // The slant of the symbol is just its italic correction.
-                slant = ( base as SymbolNode ).italic;
+                slant = base.italic;
 
             } else {
 
@@ -649,11 +654,11 @@ class TexGroup {
                 // TODO(adamjcook): Add a space in the middle of some of these
                 // operators, like \limsup
                 List<SymbolNode> output = [];
+                for ( num i = 1; i < group.value[ 'body' ].value.length; i++ ) {
 
-                for ( num i = 1; i < group.value.body.length; i++ ) {
-
-                    output.add( buildCommon.makeSymbolRoman( value: group.value.body[ i ],
-                                                             mode: group.mode ) );
+                    output.add( buildCommon.makeSymbolRoman(
+                                        value: group.value[ 'body' ].value[ i ],
+                                        mode: group.mode ) );
 
                 }
 
@@ -733,7 +738,7 @@ class TexGroup {
                     // that we are supposed to shift the limits by 1/2 of the slant,
                     // but since we are centering the limits adding a full slant of
                     // margin will shift by 1/2 that.
-                    ( finalGroup.children[0] as SpanNode ).styles[ 'marginLeft' ] =
+                    finalGroup.children[0].styles[ 'marginLeft' ] =
                         ( -slant ).toString() + 'em';
 
 
@@ -752,7 +757,7 @@ class TexGroup {
                         options: options );
 
                     // See comment above about slants
-                    ( finalGroup.children[1] as SpanNode )
+                    finalGroup.children[1]
                         .styles[ 'marginLeft' ] = slant.toString() + 'em';
 
                 } else if ( !supGroup && !subGroup ) {
@@ -785,10 +790,10 @@ class TexGroup {
                         options: options );
 
                     // See comment above about slants
-                    ( finalGroup.children[0] as SpanNode )
+                    finalGroup.children[0]
                         .styles[ 'marginLeft' ] = ( -slant ).toString() + 'em';
 
-                    ( finalGroup.children[2] as SpanNode )
+                    finalGroup.children[2]
                         .styles[ 'marginLeft' ] = slant.toString() + 'em';
 
                 }
@@ -799,9 +804,9 @@ class TexGroup {
 
             } else {
 
-                if ( group.value.symbol ) {
+                if ( group.value[ 'symbol' ] ) {
 
-                    ( base as SpanNode ).styles[ 'top' ] =
+                    base.styles[ 'top' ] =
                         baseShift.toString() + 'em';
 
                 }
@@ -1138,18 +1143,27 @@ class TexGroup {
                                             children: [],
                                             color: options.getColor() );
 
-            // Calculate the width and height of the rule, and account for units
-            num width = group.value.width.number;
+            // Calculate the shift, width and height of the rule, and account
+            // for units.
+            num shift = 0;
+            if ( group.value.shift != null ) {
 
-            if (group.value.width.unit == 'ex') {
+              shift = group.value.shift.number;
+              if ( group.value.shift.unit == 'ex' ) {
+                shift *= fontMetrics.metrics[ 'xHeight' ];
+              }
+
+            }
+
+            num width = group.value.width.number;
+            if ( group.value.width.unit == 'ex' ) {
 
                 width *= fontMetrics.metrics[ 'xHeight' ];
 
             }
 
             num height = group.value.height.number;
-
-            if (group.value.height.unit == 'ex') {
+            if ( group.value.height.unit == 'ex' ) {
 
                 height *= fontMetrics.metrics[ 'xHeight' ];
 
@@ -1157,16 +1171,19 @@ class TexGroup {
 
             // The sizes of rules are absolute, so make it larger if we are in a
             // smaller style.
+            shift /= options.style.sizeMultiplier;
             width /= options.style.sizeMultiplier;
             height /= options.style.sizeMultiplier;
 
             // Style the rule to the right size
             rule.styles[ 'borderRightWidth' ] = width.toString() + 'em';
             rule.styles[ 'borderTopWidth' ] = height.toString() + 'em';
+            rule.styles[ 'bottom' ] = shift.toString() + 'em';
 
             // Record the height and width.
-            rule.width = width; // TODO(adamjcook): `width` property?
-            rule.height = height;
+            rule.width = width;
+            rule.height = height + shift;
+            rule.depth = -shift;
 
             value = rule;
 
@@ -1224,7 +1241,7 @@ class TexGroup {
                 DomNode baseGroup = buildGroup( group: baseChar,
                                                 options: options.withStyle( options.style.cramp() ) );
                 // Finally, we pull the skew off of the symbol.
-                skew = ( baseGroup as SymbolNode ).skew;
+                skew = baseGroup.skew;
                 // Note that we now throw away baseGroup, because the layers we
                 // removed with getBaseElem might contain things like \color which
                 // we can't get rid of.
@@ -1241,7 +1258,7 @@ class TexGroup {
 
             // Build the accent
             SymbolNode accent = buildCommon.makeSymbol(
-                value: group.value.accent,
+                value: group.value[ 'accent' ],
                 style: 'Main-Regular',
                 mode: 'math',
                 color: options.getColor() );
@@ -1254,7 +1271,7 @@ class TexGroup {
             // thus shows up much too far to the left. To account for this, we add a
             // specific class which shifts the accent over to where we want it.
             // TODO(adamjcook): Fix this in a better way, like by changing the font
-            String vecClass = group.value.accent == '\\vec' ? 'accent-vec' : null;
+            String vecClass = group.value[ 'accent' ] == '\\vec' ? 'accent-vec' : null;
 
             SpanNode accBody =
                 buildCommon.makeSpan(
@@ -1273,7 +1290,7 @@ class TexGroup {
             // Shift the accent over by the skew. Note we shift by twice the skew
             // because we are centering the accent, so by adding 2*skew to the left,
             // we shift it to the right by 1*skew.
-            ( accentBody.children[1] as SpanNode ).styles[ 'marginLeft' ] =
+            accentBody.children[1].styles[ 'marginLeft' ] =
                 ( 2 * skew ).toString() + 'em';
 
             SpanNode accentWrap =
