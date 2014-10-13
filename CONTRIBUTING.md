@@ -12,6 +12,7 @@ Please see the sections below for more information on contributions.
  - [Documentation](#docs)
  - [Submission Guidelines](#submissions)
  - [Code Style Guidelines](#style)
+ - [Testing](#testing)
  - [Commit Message Guidelines](#commits)
 
 ## <a name="questions"></a> Questions
@@ -147,10 +148,42 @@ After your Pull Request is merged, you can safely delete your branch and pull th
 
 To ensure consistency throughout the project source code, it is requested that the following guidelines be considered when contributing to this project:
 
-  * All new features or bug fixes **must be tested** by one or more [specs][unit-testing].
+  * All new features or bug fixes **must be tested** by one or more [specs][unit-testing]. See the [Testing](#testing) section below.
   * All public API methods **must be documented** with [doc comments][doc-comments].
   * Besides any of the specific exceptions noted below, this project attempts to conform with the style rules described in
   [Google's Dart Style Guide][dart-style-guide].
+
+## <a name="testing"></a> Testing
+
+As outlined above, all changes must be submitted with an appropriate amount of unit tests.
+
+In pursuit of this requirement, a Gruntfile has been included with this project so that tests can be run easily and automatically when either the source or test files change.
+
+Due to the fact that libraries in this project depend on the `dart:html` package, tests cannot be executed with the standalone Dart VM, and therefore, Karma must used as the test runner.
+
+To start the Karma server in the background and to begin listening to changes in both the `lib` and `test` directories, run the following commands in the root of the repository:
+
+    npm install
+    npm install -g grunt-cli
+    grunt
+
+When a change occurs, the results of the testing process should be displayed in the console.
+
+To run the tests without keeping the Karma server running (single-run mode), run the following command in the root of the repository:
+
+    grunt karma:continuous
+
+This command will start the Karma server, open Dartium, execute the unit tests, close Dartium and kill the Karma server.
+
+If the command fails with the following error:
+
+    ERROR [launcher]: No binary for Dartium browser on your platform.
+
+Please set the `DARTIUM_BIN` environment variable in your `~/.bashrc` or `~/.bash_profile` file. For example, on OS X, this may appear similar to the following:
+
+    export DARTIUM_BIN=~/dev/dart/chromium/Chromium.app/Contents/MacOS/Chromium
+
+Where `/dev/dart` may depend on where your installation of the Dart SDK is on your system.
 
 ## <a name="commits"></a> Commit Message Guidelines
 

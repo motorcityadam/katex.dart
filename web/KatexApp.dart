@@ -1,4 +1,4 @@
-part of katex;
+part of katex_demo;
 
 
 class KatexApp {

@@ -38,50 +38,61 @@ class Parser {
 		  this.loggingEnabled } ) {
 
 	    if ( this.loggingEnabled == true ) {
-	      Logger.root.level = Level.ALL;
-	      Logger.root.onRecord.listen(( LogRecord rec ) {
-	        print( '${rec.level.name}: ${rec.time}: ${rec.message}' );
-	      });
+            Logger.root.level = Level.ALL;
+            Logger.root.onRecord.listen(( LogRecord rec ) {
+                print( '${rec.level.name}: ${rec.time}: ${rec.loggerName}: ${rec.message}' );
+            });
 	    }
 
-	    _lexer = new Lexer( expression: this.expression,
-	    	                loggingEnabled: this.loggingEnabled );
+        _logger.fine( 'Parser init :: with expression: ${ this.expression }');
+
+	    _lexer = new Lexer(
+                        expression: this.expression,
+                        loggingEnabled: this.loggingEnabled );
+
+        _logger.fine(
+                'Parser init, Lexer created :: ' +
+                '_lexer.expression: ${ _lexer.expression }');
 
   	}
 
   	// ===================== START PRIVATE METHODS =====================
     
     // TODO(adamjcook): Add method description.
-    void _expect ( { LexResult result, String type } ) {
-
-      if ( result.type != type ) {
-
-        throw new ParseError( 'Expected ' + type + ', got ' + result.type );
-
-      }
-
-    } 
-
-
-    // TODO(adamjcook): Add method description.
     ParseResult _handleExpressionBody ( { num position, String mode } ) {
 
-      List<ParseNode> body = [];
-      ParseResult atom = _parseAtom( position: position, mode: mode );
+        _logger.fine( '_handleExpressionBody() method :: called' );
 
-      // Keep adding atoms to the body until there are no more atoms to parse
-      // (either the end has been reached, a '}' or a '\right').
-      while ( atom != null ) { // TODO(adamjcook): Null????
+        List<ParseNode> body = [];
+        ParseResult atom = _parseAtom( position: position, mode: mode );
 
-        body.addAll( atom.result );
-        position = atom.position;
+        if ( loggingEnabled && atom == null ) {
 
-        atom = _parseAtom( position: position, mode: mode );
+            _logger.fine(
+                '_handleExpressionBody() method, _parseAtom returned : ' +
+                'atom returned is NULL' );
 
-      }
+        }
 
-      return new ParseResult( result: body,
-                              position: position );
+        // Keep adding atoms to the body until there are no more atoms to parse
+        // (either the end has been reached, a '}' or a '\right').
+        while ( atom != null ) {
+
+            _logger.fine(
+                '_handleExpressionBody() method, _parseAtom returned : ' +
+                'atom.position: ${ atom.position } : ' +
+                'atom.result[0].type: ${ atom.result[0].type } : ' +
+                'atom.result[0].value: ${ atom.result[0].value } : ' +
+                'atom.result[0].mode: ${ atom.result[0].mode } ' );
+
+            body.addAll( atom.result );
+            position = atom.position;
+
+            atom = _parseAtom( position: position, mode: mode );
+
+        }
+
+        return new ParseResult( result: body, position: position );
 
     }
 
@@ -130,6 +141,8 @@ class Parser {
     // TODO(adamjcook): Add method description.
   	ParseResult _parseAtom ( { num position, String mode } ) {
 
+        _logger.fine( '_parseAtom() method :: called' );
+
         // The body of an atom is an implicit group, so that things like
         // \left(x\right)^2 work correctly.
         ParseResult base = _parseImplicitGroup( position: position, mode: mode );
@@ -147,7 +160,19 @@ class Parser {
             currentPosition = position;
             base = null;
 
+            _logger.fine(
+                '_parseAtom() method, _parseImplicitGroup returned : ' +
+                'base returned is NULL : ' +
+                'currentPosition: ${ currentPosition }' );
+
         } else {
+
+            _logger.fine(
+                '_parseAtom() method, _parseImplicitGroup returned : ' +
+                'base.position: ${ base.position } : ' +
+                'base.result[0].type: ${ base.result[0].type } : ' +
+                'base.result[0].value: ${ base.result[0].value } : ' +
+                'base.result[0].mode: ${ base.result[0].mode }' );
 
             currentPosition = base.position;
 
@@ -258,11 +283,35 @@ class Parser {
     // TODO(adamjcook): Add method description.
     ParseResult _parseExpression( { num position, String mode } ) {
 
-      ParseResult parseResult = _handleExpressionBody( position: position,
-                                                       mode: mode );
+        _logger.fine( '_parseExpression() method :: called' );
 
-      return new ParseResult( result: parseResult.result,
-                              position: parseResult.position );
+        ParseResult parseResult = _handleExpressionBody(
+                                                    position: position,
+                                                    mode: mode );
+
+        if ( loggingEnabled && parseResult.result.isEmpty ) {
+
+            // TODO(adamjcook): Does this signify some type of error?
+            _logger.fine(
+                '_parseExpression() method, _handleExpressionBody returned : ' +
+                'parseResult.result returned is an EMPTY LIST' );
+
+
+        } else if ( loggingEnabled && !parseResult.result.isEmpty ) {
+
+            _logger.fine(
+                '_parseExpression() method, _handleExpressionBody returned : ' +
+                'parseResult.position: ${ parseResult.position } : ' +
+                'parseResult.result[0].type: ${ parseResult.result[0].type } : ' +
+                'parseResult.result[0].value: ${ parseResult.result[0].value } : ' +
+                'parseResult.result[0].mode: ${ parseResult.result[0].mode }' );
+
+        }
+
+
+        return new ParseResult(
+                            result: parseResult.result,
+                            position: parseResult.position );
 
     }
 
@@ -393,8 +442,6 @@ class Parser {
     // TODO(adamjcook): Add method description.
   	ParseFuncOrArgument _parseGroup ( { num position, String mode } ) {
 
-      ParseFuncOrArgument returnValue;
-
       LexResult start = _lexer.lex( position: position, mode: mode );
 
       // Try to parse an open brace
@@ -408,9 +455,7 @@ class Parser {
           LexResult closeBrace = _lexer.lex( position: expression.position,
                                              mode: mode );
 
-          _expect( result: closeBrace, type: '}' );
-
-          returnValue = new ParseFuncOrArgument(
+          return new ParseFuncOrArgument(
               result: new ParseResult(
                   result: [ new ParseNode( type: 'ordgroup',
                                            value: expression.result,
@@ -421,11 +466,9 @@ class Parser {
       } else {
 
           // Otherwise, just return a nucleus
-          returnValue = _parseSymbol( position: position, mode: mode );
+          return _parseSymbol( position: position, mode: mode );
 
       }
-
-      return returnValue;
 
   	}
 
@@ -463,18 +506,36 @@ class Parser {
     // TODO(adamjcook): Add method description.
   	ParseResult _parseImplicitGroup ( { num position, String mode } ) {
 
+        _logger.fine( '_parseImplicitGroup() method :: called' );
+
         ParseFuncOrArgument start = _parseSymbol(
-                                        position: position,
-                                        mode: mode );
+                                            position: position,
+                                            mode: mode );
 
         if ( start == null ) {
+
+            _logger.fine(
+                '_parseImplicitGroup() method, _parseSymbol returned : ' +
+                'start returned is NULL' );
 
             // If we didn't get anything we handle, fall back to parseFunction
             return _parseFunction( position: position, mode: mode );
 
         }
 
+        _logger.fine(
+                '_parseImplicitGroup() method, _parseSymbol returned : ' +
+                'start.result: ${ start.result } : ' +
+                'start.isFunction: ${ start.isFunction } : ' +
+                'start.isAllowedInText: ${ start.isAllowedInText } : ' +
+                'start.numArgs: ${ start.numArgs } : ' +
+                'start.argTypes: ${ start.argTypes }' );
+
         List<ParseNode> func = start.result.result;
+
+        _logger.fine(
+                '_parseImplicitGroup() method : ' +
+                'start.result.result: ${ start.result.result }' );
 
         if ( func[ 0 ].value == '\\left' ) {
 
@@ -572,15 +633,20 @@ class Parser {
   	// TODO(adamjcook): Add method description.
   	ParseResult _parseInput ( { num position, String mode } ) {
 
-      // Parse an expression.
-      ParseResult expression = _parseExpression( position: position,
-                                                 mode: mode );
+        _logger.fine( '_parseInput() method :: called' );
 
-      LexResult EOF = _lexer.lex( position: expression.position, mode: mode );
+        // Parse an expression.
+        ParseResult expression = _parseExpression(
+                                                position: position,
+                                                mode: mode );
 
-      _expect( result: EOF, type: 'EOF' );
+        _logger.fine(
+            '_parseInput() method, _parseExpression returned :: ' +
+            'expression.position: ${ expression.position }');
 
-      return expression;
+        // LexResult EOF = _lexer.lex( position: expression.position, mode: mode );
+
+        return expression;
 
   	}
 
@@ -596,14 +662,12 @@ class Parser {
             // should only lex a single symbol inside
             LexResult openBrace = _lexer.lex( position: position,
                                               mode: outerMode );
-            _expect( result: openBrace, type: '{' );
 
             LexResult inner = _lexer.lex( position: openBrace.position,
                                           mode: mode) ;
 
             LexResult closeBrace = _lexer.lex( position: inner.position,
                                                mode: outerMode );
-            _expect( result: closeBrace, type: '}' );
 
             return new ParseFuncOrArgument(
                 result: new ParseResult(
@@ -633,6 +697,8 @@ class Parser {
 
     // TODO(adamjcook): Add method description.
   	ParseFuncOrArgument _parseSymbol( { num position, String mode } ) {
+
+        
 
   		LexResult nucleus = _lexer.lex( position: position, mode: mode );
 
@@ -692,7 +758,13 @@ class Parser {
   	// TODO(adamjcook): Add method description.
   	List<ParseNode> parse () {
 
+        _logger.fine( 'parse() method :: called' );
+
         ParseResult parse = _parseInput( position: 0, mode: 'math' );
+
+        _logger.fine(
+            'parse() method, _parseInput returned :: ' +
+            'parse.result: ${ parse.result }' );
 
         return parse.result;
 

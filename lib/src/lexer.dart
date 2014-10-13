@@ -76,9 +76,11 @@ class Lexer {
         if ( this.loggingEnabled == true ) {
           Logger.root.level = Level.ALL;
           Logger.root.onRecord.listen(( LogRecord rec ) {
-            print( '${rec.level.name}: ${rec.time}: ${rec.message}' );
+            print( '${rec.level.name}: ${rec.time}: ${rec.loggerName}: ${rec.message}' );
           });
         }
+
+        _logger.fine( 'Lexer init :: with expression: ${ this.expression }');
 
     }
 
