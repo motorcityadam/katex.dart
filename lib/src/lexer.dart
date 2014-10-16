@@ -18,7 +18,7 @@ class Lexer {
     final bool loggingEnabled;
     final String expression;
 
-    // The "normal" types of tokens. These are the tokens which can be matched 
+    // The "normal" types of tokens. These are the tokens which can be matched
     // by a simple regex, and have the type which is listed.
     Map<String, RegExp> _mathNormals = {
 
@@ -27,7 +27,7 @@ class Lexer {
         'bin': new RegExp( r'^[*+-]' ),
         'rel': new RegExp( r'^[=<>:]' ),
         'punct': new RegExp( r'^[,;]' ),
-        "'": new RegExp( r"^'/" ),
+        "'": new RegExp( r"^'" ),
         '^': new RegExp( r'^\^' ),
         '_': new RegExp( r'^_' ),
         '{': new RegExp( r'^{' ),
@@ -38,11 +38,14 @@ class Lexer {
 
     };
 
-    // These are "normal" tokens like above, but should instead be parsed in 
+    // These are "normal" tokens like above, but should instead be parsed in
     // text mode.
     Map<String, RegExp> _textNormals = {
 
-        'textord': new RegExp( '''^[a-zA-Z0-9`!@*()-=+\[\]'";:?\/.,]''' ),
+        // TODO(adamjcook): Missing single quote (') from 'textord' below.
+        'textord': new RegExp( r'^[a-zA-Z0-9`!@*()-=+\[\]";:?\/.,]' ),
+        '[': new RegExp( r'^\[' ),
+        ']': new RegExp( r'^\]' ),
         '{': new RegExp( r'^{' ),
         '}': new RegExp( r'^}' ),
         'spacing': new RegExp( r'^~' )
@@ -51,8 +54,8 @@ class Lexer {
     // Regexes for matching whitespace.
     RegExp _whitespaceRegex = new RegExp( r'^\s*', caseSensitive: true);
     RegExp _whitespaceConcatRegex = new RegExp( r'^( +|\\  +)', caseSensitive: true);
- 
-    // Regex to match any other TeX function, which is a backslash followed 
+
+    // Regex to match any other TeX function, which is a backslash followed
     // by a word or a single symbol.
     RegExp _anyFunc = new RegExp( r'^\\(?:[a-zA-Z]+|.)', caseSensitive: true );
 
@@ -60,13 +63,13 @@ class Lexer {
     RegExp _cssColor = new RegExp( r'^(#[a-z0-9]+|[a-z]+)', caseSensitive: false );
 
     // Regex to match a dimension (for example, "1.2em" ".4pt" or "1 ex").
-    RegExp _sizeRegex = new RegExp( r'^(\d+(?:\.\d*)?|\.\d+)\s*([a-z]{2})', 
+    RegExp _sizeRegex = new RegExp( r'^(-?)\s*(\d+(?:\.\d*)?|\.\d+)\s*([a-z]{2})',
         caseSensitive: true );
 
-    Lexer( 
-        { String expression: '', 
+    Lexer(
+        { String expression: '',
           bool loggingEnabled: false } )
-    : this._init( 
+    : this._init(
         expression: expression,
         loggingEnabled: loggingEnabled );
 
@@ -85,7 +88,7 @@ class Lexer {
     }
 
     // ===================== START PRIVATE METHODS =====================
-    
+
     // TODO(adamjcook): Add method description.
     LexResult _innerLex ( { int position,
                             Map<String, RegExp> normals,
@@ -108,7 +111,7 @@ class Lexer {
 
                 return new LexResult(
                                 type: ' ',
-                                text: ' ', 
+                                text: ' ',
                                 position: position + whitespace.group(0).length );
             }
 
@@ -119,55 +122,48 @@ class Lexer {
         if ( input.isEmpty ) {
 
             return new LexResult(
-                            type: 'EOF', 
-                            text: null, 
+                            type: 'EOF',
+                            text: null,
                             position: position );
 
         }
 
         Match match = _anyFunc.firstMatch( input );
-        Match actualMatch = null;
-        String matchedToken;
 
         if ( match != null ) {
 
             // Function token matched, return result.
             return new LexResult(
-                            type: match.group(0), 
+                            type: match.group(0),
                             text: match.group(0),
                             position: position + match.group(0).length );
 
         } else {
 
-            // No function token was matched, loop through the normal token
-            // regular expressions for a match, if any.
-            normals.forEach( ( token, regexp ) {
+          // No function token was matched, loop through the normal token
+          // regular expressions for a match, if any.
+          List<String> normalsKeys = normals.keys.toList();
 
-                match = regexp.firstMatch( input );
+          for ( num i = 0; i < normalsKeys.length; i++ ) {
 
-                if ( match != null ) {
+            String normalsKey = normalsKeys[ i ];
 
-                    actualMatch = match;
-                    matchedToken = token;
-                }
+            match = normals[ normalsKey ].firstMatch( input );
 
-            } );
+            if ( match != null ) {
 
-        }
+              return new LexResult(
+                            type: normalsKey,
+                            text: match.group(0),
+                            position: position + match.group(0).length );
 
-        if ( actualMatch != null ) {
+            }
 
-            return new LexResult(
-                            type: matchedToken, 
-                            text: actualMatch.group(0),
-                            position: position + actualMatch.group(0).length );
-
-        } else {
-
-            // TODO(adamjcook): Add `lexer` and `positon` arguments to ParseError implementation.
-            throw new ParseError( 'Unexpected character' );
+          }
 
         }
+
+        throw new ParseError( 'Unexpected character' );
 
     }
 
@@ -214,7 +210,7 @@ class Lexer {
         if ( match != null ) {
 
             // Get dimension unit.
-            var unit = match.group(2);
+            var unit = match.group(3);
             // Only 'em' and 'ex' units are supported.
             if ( unit != 'em' && unit != 'ex' ) {
 
@@ -225,7 +221,9 @@ class Lexer {
             // TODO(adamjcook): Lexer.js has a complex object for `text` not just a String like here. Change?
             return new LexResult(
                             type: 'size',
-                            text: match.group(1) + unit,
+                            text: {
+                                'number': match.group(1) + match.group(2),
+                                'unit': unit },
                             position: position + match.group(0).length );
 
         }
@@ -250,9 +248,9 @@ class Lexer {
     }
 
     // ===================== END PRIVATE METHODS =====================
-    
+
     // ===================== START PUBLIC METHODS =====================
-    
+
     // TODO(adamjcook): Add method description.
     LexResult lex ( { int position, String mode } ) {
 
@@ -283,7 +281,7 @@ class Lexer {
         } else if ( mode == 'whitespace' ) {
 
             returnValue = _innerLexWhitespace( position: position );
-        
+
         }
 
       return returnValue;

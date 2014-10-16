@@ -9,13 +9,22 @@ import 'tex_function.dart';
 Map<String, TexFunction> functions = {
     // Normal square root.
     '\\sqrt': new TexFunction(
-        numArgs: 1,
-        handler: ( body ) {
-            return {
-                'type': 'sqrt',
-                'body': body
-            };
-        }
+      numArgs: 1,
+//      numOptionalArgs: 1,
+//      handler: ( String func, ParseNode optional,
+//                 ParseNode body, List<num> positions ) {
+      handler: ( String func, ParseNode body, List<num> positions ) {
+
+//        if ( optional != null ) {
+//          throw new ParseError(
+//              'Optional arguments to \\sqrt are not supported' );
+//        }
+
+        return {
+            'type': 'sqrt',
+            'body': body
+        };
+      }
     ),
 
     // Non-mathematical text.
@@ -23,12 +32,12 @@ Map<String, TexFunction> functions = {
         numArgs: 1,
         argTypes: [ 'text' ],
         greediness: 2,
-        handler: ( body ) {
+        handler: ( String func, ParseNode body, List<num> positions ) {
             // Since the corresponding buildTree function expects a list of
             // elements, we normalize for different kinds of arguments
             var inner;
-            if ( body[ 'type' ] == 'ordgroup' ) {
-                inner = body[ 'value' ];
+            if ( body.type == 'ordgroup' ) {
+                inner = body.value;
             } else {
                 inner = [ body ];
             }
@@ -45,11 +54,12 @@ Map<String, TexFunction> functions = {
         numArgs: 2,
         allowedInText: true,
         argTypes: [ 'color', 'original' ],
-        handler: ( color, body ) {
+        handler: ( String func, ParseNode color,
+                   ParseNode body, List<num> positions ) {
             // Normalize the different kinds of bodies (see \text above)
             var inner;
             if ( body.type == 'ordgroup' ) {
-                inner = body[ 'value' ];
+                inner = body.value;
             } else {
                 inner = [ body ];
             }
@@ -65,7 +75,7 @@ Map<String, TexFunction> functions = {
     // Overline.
     '\\overline': new TexFunction(
         numArgs: 1,
-        handler: ( body ) {
+        handler: ( String func, ParseNode body, List<num> positions ) {
             return {
                 'type': 'overline',
                 'body': body
@@ -77,7 +87,8 @@ Map<String, TexFunction> functions = {
     '\\rule': new TexFunction(
         numArgs: 2,
         argTypes: [ 'size', 'size' ],
-        handler: ( width, height ) {
+        handler: ( String func, ParseNode width,
+                   ParseNode height, List<num> positions ) {
             return {
                 'type': 'rule',
                 'width': width.value,
@@ -89,11 +100,21 @@ Map<String, TexFunction> functions = {
     // A KaTeX logo
     '\\KaTeX': new TexFunction(
         numArgs: 0,
-        handler: () {
+        handler: ( body ) {
             return {
                 'type': 'katex'
             };
         }
+    ),
+
+    '\\over': new TexFunction(
+      numArgs: 0,
+      handler: ( func ) {
+        return {
+            'type': 'infix',
+            'replaceWith': '\\frac'
+        };
+      }
     )
 };
 
@@ -185,7 +206,7 @@ Map<String, Map<String, dynamic>> delimiterSizes = {
 
 List<String> delimiters = [
 
-    '(', ')', '[', ']', '<', '>', '\\{', '\\}', '/', '|', '\\|', '.'
+    '(', ')', '[', ']', '<', '>', '\\{', '\\}', '/', '|', '\\|', '.',
     '\\lbrack', '\\rbrack',
     '\\lbrace', '\\rbrace',
     '\\lfloor', '\\rfloor',
@@ -204,7 +225,7 @@ List<Map<String, dynamic>> duplicatedFunctions = [
     {
         'funcs': [
 
-            '\\blue', 
+            '\\blue',
             '\\orange',
             '\\pink',
             '\\red',
@@ -216,7 +237,7 @@ List<Map<String, dynamic>> duplicatedFunctions = [
         'data': new TexFunction(
             numArgs: 1,
             allowedInText: true,
-            handler: ( func, body ) {
+            handler: ( String func, ParseNode body, List<num> positions ) {
                 var atoms;
                 if ( body.type == 'ordgroup' ) {
                     atoms = body.value;
@@ -226,7 +247,7 @@ List<Map<String, dynamic>> duplicatedFunctions = [
 
                 return {
                     'type': "color",
-                    'color': "katex-" + func.slice(1),
+                    'color': "katex-" + func.substring(1),
                     'value': atoms
                 };
             }
@@ -358,7 +379,7 @@ List<Map<String, dynamic>> duplicatedFunctions = [
         'funcs': [
 
             '\\dfrac',
-            '\\frac', 
+            '\\frac',
             '\\tfrac'
 
         ],
@@ -389,9 +410,9 @@ List<Map<String, dynamic>> duplicatedFunctions = [
         'data': new TexFunction(
             numArgs: 1,
             allowedInText: true,
-            handler: ( func, body ) {
+            handler: ( String func, ParseNode body, List<num> positions ) {
                 return {
-                    'type': func.slice(1),
+                    'type': func.substring(1),
                     'body': body
                 };
             }
@@ -413,7 +434,7 @@ List<Map<String, dynamic>> duplicatedFunctions = [
             numArgs: 1,
             handler: ( String func, ParseNode delim, List<num> positions ) {
                 if ( !delimiters.contains( delim.value ) ) {
-                    throw new ParseError( 'Invalid delimiter.' );
+                    throw new ParseError( 'Invalid delimiter' );
                 }
 
                 // left and right are caught somewhere in Parser.js, which is
@@ -488,7 +509,7 @@ List<Map<String, dynamic>> duplicatedFunctions = [
         ],
         'data': new TexFunction(
             numArgs: 1,
-            handler: ( func, base ) {
+            handler: ( String func, ParseNode base, List<num> positions ) {
                 return {
                     'type': 'accent',
                     'accent': func,

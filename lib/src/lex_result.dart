@@ -4,15 +4,16 @@ library katex.lex_result;
 // TODO(adamjcook): Add class description.
 class LexResult {
 
+  // TOOD(adamjcook): 'text' property should have a fixed, known type
 	final String type;
-	final String text;
+	final dynamic text;
 	final num position;
 
-	LexResult( 
+	LexResult(
 		{ String type: '',
-		  String text: '',
+      dynamic text: '',
 		  num position: 0 } )
-	: this._init( 
+	: this._init(
 		type: type,
 		text: text,
 		position: position );

@@ -194,7 +194,7 @@ DomNode buildGroup ( { ParseNode group, Options options, ParseNode prev } ) {
 
         // Call the groupTypes function
         TexGroup groupNode = new TexGroup(
-                                    type: group.type, 
+                                    type: group.type,
                                     group: group,
                                     options: options,
                                     prev: prev );
