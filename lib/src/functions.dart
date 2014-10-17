@@ -16,7 +16,8 @@ Map<String, TexFunction> functions = {
 
         if ( optional != null ) {
           throw new ParseError(
-              'Optional arguments to \\sqrt are not supported' );
+              message: 'Optional arguments to \\sqrt are not supported',
+              position: positions[1] - 1 );
         }
 
         return {
@@ -437,7 +438,8 @@ List<Map<String, dynamic>> duplicatedFunctions = [
             numArgs: 1,
             handler: ( String func, ParseNode delim, List<num> positions ) {
                 if ( !delimiters.contains( delim.value ) ) {
-                    throw new ParseError( 'Invalid delimiter' );
+                    throw new ParseError( message: 'Invalid delimiter',
+                                          position: positions[1] );
                 }
 
                 // left and right are caught somewhere in Parser.js, which is

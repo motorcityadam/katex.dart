@@ -66,7 +66,9 @@ class Parser {
 
       if ( result.text != expected ) {
         throw new ParseError(
-            'Expected ' + expected + ', got ' + result.text );
+            message: 'Expected ' + expected + ', got ' + result.text,
+            lexer: _lexer,
+            position: result.position );
       }
 
     }
@@ -87,7 +89,10 @@ class Parser {
 
           if ( overIndex != -1 ) {
 
-            throw new ParseError( 'Only one infix operator allowed per group');
+            throw new ParseError(
+                        message: 'Only one infix operator allowed per group',
+                        lexer: _lexer,
+                        position: -1 );
 
           }
 
@@ -144,7 +149,10 @@ class Parser {
 
       if ( group == null ) {
 
-          throw new ParseError( 'Expected group after ' + symbol );
+          throw new ParseError(
+                        message: 'Expected group after: ' + symbol,
+                        lexer: _lexer,
+                        position: position );
 
       } else if ( group.numArgs > 0 ) {
 
@@ -159,9 +167,11 @@ class Parser {
 
           } else {
 
-              throw new ParseError( 'Got function ' +
-                group.result.result.toString() +
-                ' with no arguments as ' + name );
+              throw new ParseError(
+                  message: 'Got function ' + group.result.result.toString() +
+                  ' with no arguments as ' + name,
+                  lexer: _lexer,
+                  position: position );
 
           }
 
@@ -227,7 +237,10 @@ class Parser {
 
                 // We got a superscript start
                 if ( superscript != null ) {
-                    throw new ParseError( 'Double superscript' );
+                    throw new ParseError(
+                                  message: 'Double superscript',
+                                  lexer: _lexer,
+                                  position: currentPosition );
                 }
 
                 ParseResult result = _handleSupSubscript(
@@ -243,7 +256,10 @@ class Parser {
 
                 // We got a subscript start
                 if ( subscript != null ) {
-                    throw new ParseError( 'Double subscript' );
+                    throw new ParseError(
+                                  message: 'Double subscript',
+                                  lexer: _lexer,
+                                  position: currentPosition );
                 }
 
                 ParseResult result = _handleSupSubscript(
@@ -372,8 +388,10 @@ class Parser {
                 if ( mode == 'text' && baseGroup.isAllowedInText == false ) {
 
                     throw new ParseError(
-                        'Cannot use function ' + funcList.toString() +
-                        ' in text mode' );
+                        message: 'Cannot use function ' + funcList.toString() +
+                          ' in text mode',
+                        lexer: _lexer,
+                        position: baseGroup.result.position );
 
                 }
 
@@ -440,7 +458,10 @@ class Parser {
 
                           if ( arg == null ) {
                             throw new ParseError(
-                                'Expected group after ' + baseGroup.result.result[ 0 ].type );
+                                message: 'Expected group after ' +
+                                  baseGroup.result.result[ 0 ].type,
+                                lexer: _lexer,
+                                position: newPosition );
                           }
 
                         }
@@ -459,10 +480,12 @@ class Parser {
                             } else {
 
                                 throw new ParseError(
-                                    'Got function ' +
-                                    arg.result.result.toString() +
-                                    ' as argument to function ' +
-                                    baseGroup.result.result.toString() );
+                                    message: 'Got function ' +
+                                      arg.result.result.toString() +
+                                      ' as argument to function ' +
+                                      baseGroup.result.result.toString(),
+                                    lexer: _lexer,
+                                    position: arg.result.position - 1 );
 
                             }
 
@@ -653,7 +676,10 @@ class Parser {
 
             } else {
 
-                throw new ParseError( 'Missing \\right' );
+                throw new ParseError(
+                              message: 'Missing \\right',
+                              lexer: _lexer,
+                              position: body.position );
 
             }
 

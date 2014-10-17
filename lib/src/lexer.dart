@@ -155,7 +155,9 @@ class Lexer {
 
         }
 
-        throw new ParseError( 'Unexpected character' );
+        throw new ParseError( message: 'Unexpected character' + input[ 0 ],
+                              lexer: this,
+                              position: position );
 
     }
 
@@ -177,7 +179,9 @@ class Lexer {
                             data: null,
                             position: position + match.group(0).length );
         } else {
-            throw new ParseError( 'Invalid color' );
+            throw new ParseError( message: 'Invalid color',
+                                  lexer: this,
+                                  position: position );
         }
 
     }
@@ -197,11 +201,13 @@ class Lexer {
         if ( match != null ) {
 
             // Get dimension unit.
-            var unit = match.group(3);
+            String unit = match.group(3);
             // Only 'em' and 'ex' units are supported.
             if ( unit != 'em' && unit != 'ex' ) {
 
-                throw new ParseError( 'Invalid unit' );
+                throw new ParseError( message: 'Invalid unit: ' + unit,
+                                      lexer: this,
+                                      position: position );
 
             }
 
@@ -215,7 +221,9 @@ class Lexer {
 
         }
 
-        throw new ParseError( 'Invalid size' );
+        throw new ParseError( message: 'Invalid size',
+                              lexer: this,
+                              position: position );
 
     }
 

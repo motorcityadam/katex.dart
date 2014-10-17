@@ -1452,20 +1452,20 @@ main() {
 
   });
 
-   // TODO(adamjcook): Implement this test.
-//    group('A markup generator', () {
+  // TODO(adamjcook): Implement this test.
+//  group( 'A markup generator', () {
 //
-//      test('marks trees up', () {
+//    test( 'marks trees up', () {
 //
-//        var markup = katex.renderToString('\\sigma^2');
-//        expect(markup.indexOf('<span')).toBe(0);
-//        expect(markup).toContain('\u03c3');  // sigma
-//        expect(markup).toContain('margin-right');
-//        expect(markup).not.toContain('marginRight');
-//
-//      });
+//      var markup = katex.renderToString('\\sigma^2');
+//      expect(markup.indexOf('<span')).toBe(0);
+//      expect(markup).toContain('\u03c3');  // sigma
+//      expect(markup).toContain('margin-right');
+//      expect(markup).not.toContain('marginRight');
 //
 //    });
+//
+//  });
 
   group( 'An accent parser', () {
 
@@ -1537,20 +1537,19 @@ main() {
 
   });
 
-   // TODO(adamjcook): Implement this test.
-//    group( 'A parser error', () {
-//
-//      test( 'should report the position of an error', () {
-//
-//        try {
-//          toParse( '\\sqrt}' );
-//        } catch ( e ) {
-//          expect( e.position , 5 );
-//        }
-//
-//      });
-//
-//    });
+  group( 'A parser error', () {
+
+    test( 'should report the position of an error', () {
+
+      try {
+        toParse( expression: '\\sqrt}' );
+      } catch ( e ) {
+        expect( e.position , 5 );
+      }
+
+    });
+
+  });
 
   group( 'An optional argument parser', () {
 
@@ -1561,7 +1560,6 @@ main() {
 
     });
 
-    // TODO(adamjcook): Fix this test.
     test( 'should fail on sqrts for now', () {
 
       expect( () => toParse( expression: '\\sqrt[3]{2}' ),
