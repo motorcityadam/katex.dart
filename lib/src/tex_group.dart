@@ -13,6 +13,7 @@ import 'options.dart';
 import 'parse_node.dart';
 import 'styles.dart' as styles;
 import 'tex_function.dart';
+import 'tex_style.dart';
 
 
 // TODO(adamjcook): Add class description.
@@ -1142,18 +1143,27 @@ class TexGroup {
                                             children: [],
                                             color: options.getColor() );
 
-            // Calculate the width and height of the rule, and account for units
-            num width = group.value.width.number;
+            // Calculate the shift, width and height of the rule, and account
+            // for units.
+            num shift = 0;
+            if ( group.value.shift != null ) {
 
-            if (group.value.width.unit == 'ex') {
+              shift = group.value.shift.number;
+              if ( group.value.shift.unit == 'ex' ) {
+                shift *= fontMetrics.metrics[ 'xHeight' ];
+              }
+
+            }
+
+            num width = group.value.width.number;
+            if ( group.value.width.unit == 'ex' ) {
 
                 width *= fontMetrics.metrics[ 'xHeight' ];
 
             }
 
             num height = group.value.height.number;
-
-            if (group.value.height.unit == 'ex') {
+            if ( group.value.height.unit == 'ex' ) {
 
                 height *= fontMetrics.metrics[ 'xHeight' ];
 
@@ -1161,16 +1171,19 @@ class TexGroup {
 
             // The sizes of rules are absolute, so make it larger if we are in a
             // smaller style.
+            shift /= options.style.sizeMultiplier;
             width /= options.style.sizeMultiplier;
             height /= options.style.sizeMultiplier;
 
             // Style the rule to the right size
             rule.styles[ 'borderRightWidth' ] = width.toString() + 'em';
             rule.styles[ 'borderTopWidth' ] = height.toString() + 'em';
+            rule.styles[ 'bottom' ] = shift.toString() + 'em';
 
             // Record the height and width.
-            rule.width = width; // TODO(adamjcook): `width` property?
-            rule.height = height;
+            rule.width = width;
+            rule.height = height + shift;
+            rule.depth = -shift;
 
             value = rule;
 

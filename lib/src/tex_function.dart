@@ -9,19 +9,22 @@ class TexFunction {
 	final bool allowedInText;
 	final List<String> argTypes;
 	final int greediness;
+  final int numOptionalArgs;
 	final dynamic handler;
 
-	TexFunction( 
+	TexFunction(
 		{ int numArgs: 0,
 		  bool allowedInText: false,
 		  List<String> argTypes: null,
 		  int greediness: 1,
+      int numOptionalArgs: 0,
 		  dynamic handler: null } )
-	: this._init( 
+	: this._init(
 		numArgs: numArgs,
 		allowedInText: allowedInText,
 		argTypes: argTypes,
 		greediness: greediness,
+    numOptionalArgs: numOptionalArgs,
 		handler: handler );
 
 	TexFunction._init(
@@ -29,6 +32,7 @@ class TexFunction {
 		  this.allowedInText,
 		  this.argTypes,
 		  this.greediness,
+      this.numOptionalArgs,
 		  this.handler } ) { }
 
 }

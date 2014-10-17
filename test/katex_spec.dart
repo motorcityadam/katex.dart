@@ -985,7 +985,6 @@ main() {
     test( 'should not fail', () {
 
       toParse( expression: emRule );
-
       toParse( expression: exRule );
 
     });
@@ -1058,398 +1057,400 @@ main() {
 
     });
 
-    group( 'A left/right parser', () {
+  });
 
-      String normalLeftRight = '\\left( \\dfrac{x}{y} \\right)';
-      String emptyRight = '\\left( \\dfrac{x}{y} \\right.';
+  group( 'A left/right parser', () {
 
-      test( 'should not fail', () {
+    String normalLeftRight = '\\left( \\dfrac{x}{y} \\right)';
+    String emptyRight = '\\left( \\dfrac{x}{y} \\right.';
 
-        toParse( expression: normalLeftRight );
+    test( 'should not fail', () {
 
-      });
+      toParse( expression: normalLeftRight );
 
-      test( 'should produce a leftright', () {
+    });
 
-        List<ParseNode> tree = toParse( expression: normalLeftRight );
-        ParseNode parseNode = tree[ 0 ];
+    test( 'should produce a leftright', () {
 
-        expect( parseNode.type, matches( new RegExp( 'leftright' ) ) );
+      List<ParseNode> tree = toParse( expression: normalLeftRight );
+      ParseNode parseNode = tree[ 0 ];
 
-        expect( parseNode.value[ 'left' ][ 'value' ],
-                matches( new RegExp( '\\(' ) ) );
+      expect( parseNode.type, matches( new RegExp( 'leftright' ) ) );
 
-        expect( parseNode.value[ 'right' ][ 'value' ],
-                matches( new RegExp( '\\)' ) ) );
+      expect( parseNode.value[ 'left' ][ 'value' ],
+              matches( new RegExp( '\\(' ) ) );
 
-      });
+      expect( parseNode.value[ 'right' ][ 'value' ],
+              matches( new RegExp( '\\)' ) ) );
 
-      test( 'should error when test is mismatched', () {
+    });
 
-        String unmatchedLeft = '\\left( \\dfrac{x}{y}';
-        String unmatchedRight = '\\dfrac{x}{y} \\right)';
+    test( 'should error when test is mismatched', () {
 
-        expect( () => toParse( expression: unmatchedLeft ),
+      String unmatchedLeft = '\\left( \\dfrac{x}{y}';
+      String unmatchedRight = '\\dfrac{x}{y} \\right)';
+
+      expect( () => toParse( expression: unmatchedLeft ),
+              throwsA( new isInstanceOf<ParseError>() ) );
+
+      expect( () => toParse( expression: unmatchedRight ),
+              throwsA( new isInstanceOf<ParseError>() ) );
+
+    });
+
+    test( 'should error when braces are mismatched', () {
+
+      String unmatched = '{ \\left( \\dfrac{x}{y} } \\right)';
+
+      expect( () => toParse( expression: unmatched ),
+              throwsA( new isInstanceOf<ParseError>() ) );
+
+    });
+
+    test( 'should error when non-delimiters are provided', () {
+
+      String nonDelimiter = r'\\left$ \\dfrac{x}{y} \\right)';
+
+      expect( () => toParse( expression: nonDelimiter ),
+              throwsA( new isInstanceOf<ParseError>() ) );
+
+    });
+
+    test( 'should parse the empty "." delimiter', () {
+
+      toParse( expression: emptyRight );
+
+    });
+
+    test( 'should parse the "." delimiter with normal sizes', () {
+
+      String normalEmpty = '\\Bigl .';
+
+      toParse( expression: normalEmpty );
+
+    });
+
+  });
+
+  group( 'A sqrt parser', () {
+
+    String sqrt = '\\sqrt{x}';
+    String missingGroup = '\\sqrt';
+
+    test( 'should parse square roots', () {
+
+      toParse( expression: sqrt );
+
+    });
+
+    test( 'should error when there is no group', () {
+
+      expect( () => toParse( expression: missingGroup ),
+              throwsA( new isInstanceOf<ParseError>() ) );
+
+    });
+
+    test( 'should produce sqrts', () {
+
+      List<ParseNode> tree = toParse( expression: sqrt );
+      ParseNode parseNode = tree[ 0 ];
+
+      expect( parseNode.type, matches( new RegExp( 'sqrt' ) ) );
+
+    });
+
+  });
+
+  group( 'A TeX-compliant parser', () {
+
+    test( 'should work', () {
+
+      toParse( expression: '\\frac 2 3' );
+
+    });
+
+    test( 'should fail if there are not enough arguments', () {
+
+      List<String> missingGroups = [
+        '\\frac{x}',
+        '\\color{#fff}',
+        '\\rule{1em}',
+        '\\llap',
+        '\\bigl',
+        '\\text'
+      ];
+
+      missingGroups.forEach( (group) {
+
+        expect( () => toParse( expression: group ),
                 throwsA( new isInstanceOf<ParseError>() ) );
-
-        expect( () => toParse( expression: unmatchedRight ),
-                throwsA( new isInstanceOf<ParseError>() ) );
-
-      });
-
-      test( 'should error when braces are mismatched', () {
-
-        String unmatched = '{ \\left( \\dfrac{x}{y} } \\right)';
-
-        expect( () => toParse( expression: unmatched ),
-                throwsA( new isInstanceOf<ParseError>() ) );
-
-      });
-
-      test( 'should error when non-delimiters are provided', () {
-
-        String nonDelimiter = r'\\left$ \\dfrac{x}{y} \\right)';
-
-        expect( () => toParse( expression: nonDelimiter ),
-                throwsA( new isInstanceOf<ParseError>() ) );
-
-      });
-
-      test( 'should parse the empty "." delimiter', () {
-
-        toParse( expression: emptyRight );
-
-      });
-
-      test( 'should parse the "." delimiter with normal sizes', () {
-
-        String normalEmpty = '\\Bigl .';
-
-        toParse( expression: normalEmpty );
 
       });
 
     });
 
-    group( 'A sqrt parser', () {
+    test( 'should fail when there are missing sup/subscripts', () {
 
-      String sqrt = '\\sqrt{x}';
-      String missingGroup = '\\sqrt';
+      expect( () => toParse( expression: 'x^' ),
+              throwsA( new isInstanceOf<ParseError>() ) );
 
-      test( 'should parse square roots', () {
+      expect( () => toParse( expression: 'x_' ),
+              throwsA( new isInstanceOf<ParseError>() ) );
 
-        toParse( expression: sqrt );
+    });
 
-      });
+    test( 'should fail when arguments require arguments', () {
 
-      test( 'should error when there is no group', () {
+      List<String> badArguments = [
+        '\\frac \\frac x y z',
+        '\\frac x \\frac y z',
+        '\\frac \\sqrt x y',
+        '\\frac x \\sqrt y',
+        '\\frac \\llap x y',
+        '\\frac x \\llap y',
+        '\\llap \\llap x',
+        '\\sqrt \\llap x'
+      ];
 
-        expect( () => toParse( expression: missingGroup ),
+      badArguments.forEach( (argument) {
+
+        expect( () => toParse( expression: argument ),
                 throwsA( new isInstanceOf<ParseError>() ) );
-
-      });
-
-      test( 'should produce sqrts', () {
-
-        List<ParseNode> tree = toParse( expression: sqrt );
-        ParseNode parseNode = tree[ 0 ];
-
-        expect( parseNode.type, matches( new RegExp( 'sqrt' ) ) );
 
       });
 
     });
 
-    group( 'A TeX-compliant parser', () {
+    test( 'should work when the arguments have braces', () {
 
-      test( 'should work', () {
+      List<String> goodArguments = [
+        '\\frac {\\frac x y} z',
+        '\\frac x {\\frac y z}',
+        '\\frac {\\sqrt x} y',
+        '\\frac x {\\sqrt y}',
+        '\\frac {\\llap x} y',
+        '\\frac x {\\llap y}',
+        '\\llap {\\frac x y}',
+        '\\llap {\\llap x}',
+        '\\sqrt {\\llap x}'
+      ];
 
-        toParse( expression: '\\frac 2 3' );
+      goodArguments.forEach( (argument) {
 
-      });
-
-      test( 'should fail if there are not enough arguments', () {
-
-        List<String> missingGroups = [
-          '\\frac{x}',
-          '\\color{#fff}',
-          '\\rule{1em}',
-          '\\llap',
-          '\\bigl',
-          '\\text'
-        ];
-
-        missingGroups.forEach( (group) {
-
-          expect( () => toParse( expression: group ),
-                  throwsA( new isInstanceOf<ParseError>() ) );
-
-        });
-
-      });
-
-      test( 'should fail when there are missing sup/subscripts', () {
-
-        expect( () => toParse( expression: 'x^' ),
-                throwsA( new isInstanceOf<ParseError>() ) );
-
-        expect( () => toParse( expression: 'x_' ),
-                throwsA( new isInstanceOf<ParseError>() ) );
-
-      });
-
-      test( 'should fail when arguments require arguments', () {
-
-        List<String> badArguments = [
-          '\\frac \\frac x y z',
-          '\\frac x \\frac y z',
-          '\\frac \\sqrt x y',
-          '\\frac x \\sqrt y',
-          '\\frac \\llap x y',
-          '\\frac x \\llap y',
-          '\\llap \\llap x',
-          '\\sqrt \\llap x'
-        ];
-
-        badArguments.forEach( (argument) {
-
-          expect( () => toParse( expression: argument ),
-                  throwsA( new isInstanceOf<ParseError>() ) );
-
-        });
-
-      });
-
-      test( 'should work when the arguments have braces', () {
-
-        List<String> goodArguments = [
-          '\\frac {\\frac x y} z',
-          '\\frac x {\\frac y z}',
-          '\\frac {\\sqrt x} y',
-          '\\frac x {\\sqrt y}',
-          '\\frac {\\llap x} y',
-          '\\frac x {\\llap y}',
-          '\\llap {\\frac x y}',
-          '\\llap {\\llap x}',
-          '\\sqrt {\\llap x}'
-        ];
-
-        goodArguments.forEach( (argument) {
-
-          toParse( expression: argument );
-
-        });
-
-      });
-
-      test( 'should fail when sup/subscripts require arguments', () {
-
-        List<String> badSupSubscripts = [
-          'x^\\sqrt x',
-          'x^\\llap x',
-          'x_\\sqrt x',
-          'x_\\llap x'
-        ];
-
-        badSupSubscripts.forEach( (supSubscript) {
-
-          expect( () => toParse( expression: supSubscript ),
-                  throwsA( new isInstanceOf<ParseError>() ) );
-
-        });
-
-      });
-
-      test( 'should work when sup/subscripts arguments have braces', () {
-
-        List<String> goodSupSubscripts = [
-          'x^{\\sqrt x}',
-          'x^{\\llap x}',
-          'x_{\\sqrt x}',
-          'x_{\\llap x}'
-        ];
-
-        goodSupSubscripts.forEach( (supSubscript) {
-
-          toParse( expression: supSubscript );
-
-        });
-
-      });
-
-      test( 'should parse multiple primes correctly', () {
-
-        toParse( expression: "x''''" );
-        toParse( expression: "x_2''" );
-        toParse( expression: "x''_2" );
-        toParse( expression: "x'_2'" );
-
-      });
-
-      test( 'should fail when sup/subscripts are interspersed with arguments', () {
-
-        expect( () => toParse( expression: '\\sqrt^23' ),
-                throwsA( new isInstanceOf<ParseError>() ) );
-
-        expect( () => toParse( expression: '\\frac^234' ),
-                throwsA( new isInstanceOf<ParseError>() ) );
-
-        expect( () => toParse( expression: '\\frac2^34' ),
-                throwsA( new isInstanceOf<ParseError>() ) );
-
-      });
-
-      test( 'should succeed when sup/subscripts come after whole functions', () {
-
-        toParse( expression: '\\sqrt2^3' );
-        toParse( expression: '\\frac23^4' );
-
-      });
-
-      test( 'should succeed with a sqrt around a text/frac', () {
-
-        toParse( expression: '\\sqrt \\frac x y' );
-        toParse( expression: '\\sqrt \\text x' );
-        toParse( expression: 'x^\\frac x y' );
-        toParse( expression: 'x_\\text x' );
-
-      });
-
-      test( 'should fail when arguments are \\left', () {
-
-        List<String> badLeftArguments = [
-          '\\frac \\left( x \\right) y',
-          '\\frac x \\left( y \\right)',
-          '\\llap \\left( x \\right)',
-          '\\sqrt \\left( x \\right)',
-          'x^\\left( x \\right)'
-        ];
-
-        badLeftArguments.forEach( (argument) {
-
-          expect( () => toParse( expression: argument ),
-                  throwsA( new isInstanceOf<ParseError>() ) );
-
-        });
-
-      });
-
-      test( 'should succeed when there are braces around the \\left/\\right', () {
-
-        List<String> goodLeftArguments = [
-          '\\frac {\\left( x \\right)} y',
-          '\\frac x {\\left( y \\right)}',
-          '\\llap {\\left( x \\right)}',
-          '\\sqrt {\\left( x \\right)}',
-          'x^{\\left( x \\right)}'
-        ];
-
-        goodLeftArguments.forEach( (argument) {
-
-          toParse( expression: argument );
-
-        });
+        toParse( expression: argument );
 
       });
 
     });
 
-    group( 'A style change parser', () {
+    test( 'should fail when sup/subscripts require arguments', () {
 
-      test( 'should not fail', () {
+      List<String> badSupSubscripts = [
+        'x^\\sqrt x',
+        'x^\\llap x',
+        'x_\\sqrt x',
+        'x_\\llap x'
+      ];
 
-        toParse( expression: '\\displaystyle x' );
-        toParse( expression: '\\textstyle x' );
-        toParse( expression: '\\scriptstyle x' );
-        toParse( expression: '\\scriptscriptstyle x' );
+      badSupSubscripts.forEach( (supSubscript) {
 
-      });
-
-      test( 'should produce the correct style', () {
-
-        List<ParseNode> treeA = toParse( expression: '\\displaystyle x' );
-        ParseNode parseNodeA = treeA[ 0 ];
-
-        expect( parseNodeA.value[ 'style' ],
-                matches( new RegExp( 'display' ) ) );
-
-        List<ParseNode> treeB = toParse( expression: '\\scriptscriptstyle x' );
-        ParseNode parseNodeB = treeB[ 0 ];
-
-        expect( parseNodeB.value[ 'style' ],
-                matches( new RegExp( 'scriptscript' ) ) );
-
-      });
-
-      test( 'should only change the style within its group', () {
-
-        String text = 'a b { c d \\displaystyle e f } g h';
-
-        List<ParseNode> tree = toParse( expression: text );
-        ParseNode parseNode = tree[ 2 ];
-
-        ParseNode displayNode = parseNode.value[ 2 ];
-
-        expect( displayNode.type, matches( new RegExp( 'styling' ) ) );
-
-        List<ParseNode> displayBody = displayNode.value[ 'value' ];
-
-        expect( displayBody.length, 2 );
-        expect( displayBody[ 0 ].value, matches( new RegExp( 'e' ) ) );
+        expect( () => toParse( expression: supSubscript ),
+                throwsA( new isInstanceOf<ParseError>() ) );
 
       });
 
     });
 
-    group( 'A bin builder', () {
+    test( 'should work when sup/subscripts arguments have braces', () {
 
-      test( 'should create mbins normally', () {
+      List<String> goodSupSubscripts = [
+        'x^{\\sqrt x}',
+        'x^{\\llap x}',
+        'x_{\\sqrt x}',
+        'x_{\\llap x}'
+      ];
 
-        List<SymbolNode> symbols = getBuilt( expression: 'x + y' );
+      goodSupSubscripts.forEach( (supSubscript) {
 
-        expect( symbols[ 1 ].classes.contains( 'mbin' ), isTrue );
-
-      });
-
-      test( 'should create ords when at the beginning of lists', () {
-
-        List<SymbolNode> symbols = getBuilt( expression: '+ x' );
-
-        expect( symbols[ 0 ].classes.contains( 'mord' ), isTrue );
-        expect( symbols[ 0 ].classes.contains( 'mbin' ), isFalse );
-
-      });
-
-      test( 'should create ords after some other objects', () {
-
-        expect( getBuilt( expression: 'x + + 2' )[ 2 ].classes.contains( 'mord' ),
-                isTrue );
-
-        expect( getBuilt( expression: '( + 2' )[ 1 ].classes.contains( 'mord' ),
-                isTrue );
-
-        expect( getBuilt( expression: '= + 2' )[ 1 ].classes.contains( 'mord' ),
-                isTrue );
-
-        expect( getBuilt( expression: '\\sin + 2' )[ 1 ].classes.contains( 'mord' ),
-                isTrue );
-
-        expect( getBuilt( expression: ', + 2' )[ 1 ].classes.contains( 'mord' ),
-                isTrue );
-
-      });
-
-      test( 'should correctly interact with color objects', () {
-
-        expect( getBuilt( expression: '\\blue{x}+y' )[ 1 ].classes.contains( 'mbin' ),
-                isTrue );
-
-        expect( getBuilt( expression: '\\blue{x+}+y' )[ 1 ].classes.contains( 'mord' ),
-                isTrue );
+        toParse( expression: supSubscript );
 
       });
 
     });
+
+    test( 'should parse multiple primes correctly', () {
+
+      toParse( expression: "x''''" );
+      toParse( expression: "x_2''" );
+      toParse( expression: "x''_2" );
+      toParse( expression: "x'_2'" );
+
+    });
+
+    test( 'should fail when sup/subscripts are interspersed with arguments', () {
+
+      expect( () => toParse( expression: '\\sqrt^23' ),
+              throwsA( new isInstanceOf<ParseError>() ) );
+
+      expect( () => toParse( expression: '\\frac^234' ),
+              throwsA( new isInstanceOf<ParseError>() ) );
+
+      expect( () => toParse( expression: '\\frac2^34' ),
+              throwsA( new isInstanceOf<ParseError>() ) );
+
+    });
+
+    test( 'should succeed when sup/subscripts come after whole functions', () {
+
+      toParse( expression: '\\sqrt2^3' );
+      toParse( expression: '\\frac23^4' );
+
+    });
+
+    test( 'should succeed with a sqrt around a text/frac', () {
+
+      toParse( expression: '\\sqrt \\frac x y' );
+      toParse( expression: '\\sqrt \\text x' );
+      toParse( expression: 'x^\\frac x y' );
+      toParse( expression: 'x_\\text x' );
+
+    });
+
+    test( 'should fail when arguments are \\left', () {
+
+      List<String> badLeftArguments = [
+        '\\frac \\left( x \\right) y',
+        '\\frac x \\left( y \\right)',
+        '\\llap \\left( x \\right)',
+        '\\sqrt \\left( x \\right)',
+        'x^\\left( x \\right)'
+      ];
+
+      badLeftArguments.forEach( (argument) {
+
+        expect( () => toParse( expression: argument ),
+                throwsA( new isInstanceOf<ParseError>() ) );
+
+      });
+
+    });
+
+    test( 'should succeed when there are braces around the \\left/\\right', () {
+
+      List<String> goodLeftArguments = [
+        '\\frac {\\left( x \\right)} y',
+        '\\frac x {\\left( y \\right)}',
+        '\\llap {\\left( x \\right)}',
+        '\\sqrt {\\left( x \\right)}',
+        'x^{\\left( x \\right)}'
+      ];
+
+      goodLeftArguments.forEach( (argument) {
+
+        toParse( expression: argument );
+
+      });
+
+    });
+
+  });
+
+  group( 'A style change parser', () {
+
+    test( 'should not fail', () {
+
+      toParse( expression: '\\displaystyle x' );
+      toParse( expression: '\\textstyle x' );
+      toParse( expression: '\\scriptstyle x' );
+      toParse( expression: '\\scriptscriptstyle x' );
+
+    });
+
+    test( 'should produce the correct style', () {
+
+      List<ParseNode> treeA = toParse( expression: '\\displaystyle x' );
+      ParseNode parseNodeA = treeA[ 0 ];
+
+      expect( parseNodeA.value[ 'style' ],
+              matches( new RegExp( 'display' ) ) );
+
+      List<ParseNode> treeB = toParse( expression: '\\scriptscriptstyle x' );
+      ParseNode parseNodeB = treeB[ 0 ];
+
+      expect( parseNodeB.value[ 'style' ],
+              matches( new RegExp( 'scriptscript' ) ) );
+
+    });
+
+    test( 'should only change the style within its group', () {
+
+      String text = 'a b { c d \\displaystyle e f } g h';
+
+      List<ParseNode> tree = toParse( expression: text );
+      ParseNode parseNode = tree[ 2 ];
+
+      ParseNode displayNode = parseNode.value[ 2 ];
+
+      expect( displayNode.type, matches( new RegExp( 'styling' ) ) );
+
+      List<ParseNode> displayBody = displayNode.value[ 'value' ];
+
+      expect( displayBody.length, 2 );
+      expect( displayBody[ 0 ].value, matches( new RegExp( 'e' ) ) );
+
+    });
+
+  });
+
+  group( 'A bin builder', () {
+
+    test( 'should create mbins normally', () {
+
+      List<SymbolNode> symbols = getBuilt( expression: 'x + y' );
+
+      expect( symbols[ 1 ].classes.contains( 'mbin' ), isTrue );
+
+    });
+
+    test( 'should create ords when at the beginning of lists', () {
+
+      List<SymbolNode> symbols = getBuilt( expression: '+ x' );
+
+      expect( symbols[ 0 ].classes.contains( 'mord' ), isTrue );
+      expect( symbols[ 0 ].classes.contains( 'mbin' ), isFalse );
+
+    });
+
+    test( 'should create ords after some other objects', () {
+
+      expect( getBuilt( expression: 'x + + 2' )[ 2 ].classes.contains( 'mord' ),
+              isTrue );
+
+      expect( getBuilt( expression: '( + 2' )[ 1 ].classes.contains( 'mord' ),
+              isTrue );
+
+      expect( getBuilt( expression: '= + 2' )[ 1 ].classes.contains( 'mord' ),
+              isTrue );
+
+      expect( getBuilt( expression: '\\sin + 2' )[ 1 ].classes.contains( 'mord' ),
+              isTrue );
+
+      expect( getBuilt( expression: ', + 2' )[ 1 ].classes.contains( 'mord' ),
+              isTrue );
+
+    });
+
+    test( 'should correctly interact with color objects', () {
+
+      expect( getBuilt( expression: '\\blue{x}+y' )[ 1 ].classes.contains( 'mbin' ),
+              isTrue );
+
+      expect( getBuilt( expression: '\\blue{x+}+y' )[ 1 ].classes.contains( 'mord' ),
+              isTrue );
+
+    });
+
+  });
 
    // TODO(adamjcook): Implement this test.
 //    group('A markup generator', () {
@@ -1466,75 +1467,75 @@ main() {
 //
 //    });
 
-    group( 'An accent parser', () {
+  group( 'An accent parser', () {
 
-      test( 'should not fail', () {
+    test( 'should not fail', () {
 
-        toParse( expression: '\\vec{x}' );
-        toParse( expression: '\\vec{x^2}' );
-        toParse( expression: '\\vec{x}^2' );
-        toParse( expression: '\\vec x' );
-
-      });
-
-      test( 'should produce accents', () {
-
-        List<ParseNode> tree = toParse( expression: '\\vec x' );
-        ParseNode parseNode = tree[ 0 ];
-
-        expect( parseNode.type, matches( new RegExp( 'accent' ) ) );
-
-      });
-
-      test( 'should be grouped more tightly than supsubs', () {
-
-        List<ParseNode> tree = toParse( expression: '\\vec x^2' );
-        ParseNode parseNode = tree[ 0 ];
-
-        expect( parseNode.type, matches( new RegExp( 'supsub' ) ) );
-
-      });
-
-      test( 'should not parse expanding accents', () {
-
-        expect( () => toParse( expression: '\\widehat{x}' ),
-                throwsA( new isInstanceOf<ParseError>() ) );
-
-      });
+      toParse( expression: '\\vec{x}' );
+      toParse( expression: '\\vec{x^2}' );
+      toParse( expression: '\\vec{x}^2' );
+      toParse( expression: '\\vec x' );
 
     });
 
-    group( 'An accent builder', () {
+    test( 'should produce accents', () {
 
-      test( 'should not fail', () {
+      List<ParseNode> tree = toParse( expression: '\\vec x' );
+      ParseNode parseNode = tree[ 0 ];
 
-        toBuild( expression: '\\vec{x}' );
-        toBuild( expression: '\\vec{x}^2' );
-        toBuild( expression: '\\vec{x}_2' );
-        toBuild( expression: '\\vec{x}_2^2' );
-
-      });
-
-      test( 'should produce mords', () {
-
-        expect( getBuilt( expression: '\\vec x' )[ 0 ].classes.contains( 'mord' ),
-                isTrue );
-
-        expect( getBuilt( expression: '\\vec +' )[ 0 ].classes.contains( 'mord' ),
-                isTrue );
-
-        expect( getBuilt( expression: '\\vec +' )[ 0 ].classes.contains( 'mbin' ),
-                isFalse );
-
-        expect( getBuilt( expression: '\\vec )^2' )[ 0 ].classes.contains( 'mord' ),
-                isTrue );
-
-        expect( getBuilt( expression: '\\vec )^2' )[ 0 ].classes.contains( 'mclose' ),
-                isFalse );
-
-      });
+      expect( parseNode.type, matches( new RegExp( 'accent' ) ) );
 
     });
+
+    test( 'should be grouped more tightly than supsubs', () {
+
+      List<ParseNode> tree = toParse( expression: '\\vec x^2' );
+      ParseNode parseNode = tree[ 0 ];
+
+      expect( parseNode.type, matches( new RegExp( 'supsub' ) ) );
+
+    });
+
+    test( 'should not parse expanding accents', () {
+
+      expect( () => toParse( expression: '\\widehat{x}' ),
+              throwsA( new isInstanceOf<ParseError>() ) );
+
+    });
+
+  });
+
+  group( 'An accent builder', () {
+
+    test( 'should not fail', () {
+
+      toBuild( expression: '\\vec{x}' );
+      toBuild( expression: '\\vec{x}^2' );
+      toBuild( expression: '\\vec{x}_2' );
+      toBuild( expression: '\\vec{x}_2^2' );
+
+    });
+
+    test( 'should produce mords', () {
+
+      expect( getBuilt( expression: '\\vec x' )[ 0 ].classes.contains( 'mord' ),
+              isTrue );
+
+      expect( getBuilt( expression: '\\vec +' )[ 0 ].classes.contains( 'mord' ),
+              isTrue );
+
+      expect( getBuilt( expression: '\\vec +' )[ 0 ].classes.contains( 'mbin' ),
+              isFalse );
+
+      expect( getBuilt( expression: '\\vec )^2' )[ 0 ].classes.contains( 'mord' ),
+              isTrue );
+
+      expect( getBuilt( expression: '\\vec )^2' )[ 0 ].classes.contains( 'mclose' ),
+              isFalse );
+
+    });
+
+  });
 
    // TODO(adamjcook): Implement this test.
 //    group( 'A parser error', () {
@@ -1551,44 +1552,41 @@ main() {
 //
 //    });
 
-    group( 'An optional argument parser', () {
+  group( 'An optional argument parser', () {
 
-      test( 'should not fail', () {
+    test( 'should not fail', () {
 
-        toParse( expression: '\\frac[1]{2}{3}' );
-        toParse( expression: '\\rule[0.2em]{1em}{1em}' );
+      toParse( expression: '\\frac[1]{2}{3}' );
+      toParse( expression: '\\rule[0.2em]{1em}{1em}' );
 
-      });
+    });
 
-      // TODO(adamjcook): Fix this test.
-//      test( 'should fail on sqrts for now', () {
-//
-//        expect( () => toParse( expression: '\\sqrt[3]{2}' ),
-//        throwsA( new isInstanceOf<ParseError>() ) );
-//
-//      });
+    // TODO(adamjcook): Fix this test.
+    test( 'should fail on sqrts for now', () {
 
-      test( 'should work when the optional argument is missing', () {
+      expect( () => toParse( expression: '\\sqrt[3]{2}' ),
+      throwsA( new isInstanceOf<ParseError>() ) );
 
-        toParse( expression: '\\sqrt{2}' );
-        toParse( expression: '\\rule{1em}{2em}' );
+    });
 
-      });
+    test( 'should work when the optional argument is missing', () {
 
-      test( 'should fail when the optional argument is malformed', () {
+      toParse( expression: '\\sqrt{2}' );
+      toParse( expression: '\\rule{1em}{2em}' );
 
-        expect( () => toParse( expression: '\\rule[1]{2em}{3em}' ),
-        throwsA( new isInstanceOf<ParseError>() ) );
+    });
 
-      });
+    test( 'should fail when the optional argument is malformed', () {
 
-      // TODO(adamjcook): Fix this test.
-//      test( 'should not work if the optional argument is not closed', () {
-//
-//        expect( () => toParse( expression: '\\sqrt[' ),
-//        throwsA( new isInstanceOf<ParseError>() ) );
-//
-//      });
+      expect( () => toParse( expression: '\\rule[1]{2em}{3em}' ),
+      throwsA( new isInstanceOf<ParseError>() ) );
+
+    });
+
+    test( 'should not work if the optional argument is not closed', () {
+
+      expect( () => toParse( expression: '\\sqrt[' ),
+      throwsA( new isInstanceOf<ParseError>() ) );
 
     });
 

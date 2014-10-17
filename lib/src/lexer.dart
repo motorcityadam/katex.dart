@@ -5,12 +5,11 @@ import 'dart:core';
 
 import 'package:logging/logging.dart';
 
-import 'lex_result.dart';
 import 'parse_error.dart';
+import 'token.dart';
 
 
 final Logger _logger = new Logger( 'katex.lexer' );
-
 
 // TODO(adamjcook): Add class description.
 class Lexer {
@@ -19,50 +18,43 @@ class Lexer {
     final String expression;
 
     // The "normal" types of tokens. These are the tokens which can be matched
-    // by a simple regex, and have the type which is listed.
-    Map<String, RegExp> _mathNormals = {
+    // by a simple regex.
+    List<RegExp> _mathNormals = [
 
-        'textord': new RegExp( r'^[/|@."`0-9]' ),
-        'mathord': new RegExp( r'^[a-zA-Z]' ),
-        'bin': new RegExp( r'^[*+-]' ),
-        'rel': new RegExp( r'^[=<>:]' ),
-        'punct': new RegExp( r'^[,;]' ),
-        "'": new RegExp( r"^'" ),
-        '^': new RegExp( r'^\^' ),
-        '_': new RegExp( r'^_' ),
-        '{': new RegExp( r'^{' ),
-        '}': new RegExp( r'^}' ),
-        'open': new RegExp( r'^[(\[]' ),
-        'close': new RegExp( r'^[)\]?!]' ),
-        'spacing': new RegExp( r'^~' )
+        new RegExp( r'^[/|@.""`0-9a-zA-Z]' ), // ords
+        new RegExp( r'^[*+-]' ),    // bins
+        new RegExp( r'^[=<>:]' ),   // rels
+        new RegExp( r'^[,;]' ),     // punctuation
+        new RegExp( r"^['\^_{}]" ), // misc
+        new RegExp( r'^[(\[]' ),    // opens
+        new RegExp( r'^[)\]?!]' ),  // closes
+        new RegExp( r'^~' )         // spacing
 
-    };
+    ];
 
     // These are "normal" tokens like above, but should instead be parsed in
     // text mode.
-    Map<String, RegExp> _textNormals = {
+    List<RegExp> _textNormals = [
 
-        // TODO(adamjcook): Missing single quote (') from 'textord' below.
-        'textord': new RegExp( r'^[a-zA-Z0-9`!@*()-=+\[\]";:?\/.,]' ),
-        '[': new RegExp( r'^\[' ),
-        ']': new RegExp( r'^\]' ),
-        '{': new RegExp( r'^{' ),
-        '}': new RegExp( r'^}' ),
-        'spacing': new RegExp( r'^~' )
-    };
+        new RegExp( r'^[a-zA-Z0-9`!@*()-=+\[\]";:?\/.,]' ), // ords
+        new RegExp( r'^[{}]' ), // grouping
+        new RegExp( r'^~' ) // spacing
 
-    // Regexes for matching whitespace.
+    ];
+
+    // Regular expressions for matching whitespace.
     RegExp _whitespaceRegex = new RegExp( r'^\s*', caseSensitive: true);
     RegExp _whitespaceConcatRegex = new RegExp( r'^( +|\\  +)', caseSensitive: true);
 
-    // Regex to match any other TeX function, which is a backslash followed
-    // by a word or a single symbol.
+    // Regular expression to match any other TeX function, which is a backslash
+    // followed by a word or a single symbol.
     RegExp _anyFunc = new RegExp( r'^\\(?:[a-zA-Z]+|.)', caseSensitive: true );
 
-    // Regex to match a CSS color (for example, #ffffff or BlueViolet).
+    // Regular expression to match a CSS color (for example, #ffffff or BlueViolet).
     RegExp _cssColor = new RegExp( r'^(#[a-z0-9]+|[a-z]+)', caseSensitive: false );
 
-    // Regex to match a dimension (for example, "1.2em" ".4pt" or "1 ex").
+    // Regular expression to match a dimension (for example, "1.2em" ".4pt" or
+    // "1 ex").
     RegExp _sizeRegex = new RegExp( r'^(-?)\s*(\d+(?:\.\d*)?|\.\d+)\s*([a-z]{2})',
         caseSensitive: true );
 
@@ -90,8 +82,8 @@ class Lexer {
     // ===================== START PRIVATE METHODS =====================
 
     // TODO(adamjcook): Add method description.
-    LexResult _innerLex ( { int position,
-                            Map<String, RegExp> normals,
+    Token _innerLex ( { int position,
+                            List<RegExp> normals,
                             bool ignoreWhitespace } ) {
 
         String input = expression.substring( position );
@@ -109,10 +101,11 @@ class Lexer {
 
             if ( whitespace != null ) {
 
-                return new LexResult(
-                                type: ' ',
-                                text: ' ',
-                                position: position + whitespace.group(0).length );
+              return new Token(
+                          text: ' ',
+                          data: null,
+                          position: position + whitespace.group(0).length );
+
             }
 
         }
@@ -121,9 +114,9 @@ class Lexer {
         // EOF token.
         if ( input.isEmpty ) {
 
-            return new LexResult(
-                            type: 'EOF',
-                            text: null,
+            return new Token(
+                            text: 'EOF',
+                            data: null,
                             position: position );
 
         }
@@ -133,28 +126,27 @@ class Lexer {
         if ( match != null ) {
 
             // Function token matched, return result.
-            return new LexResult(
-                            type: match.group(0),
+            return new Token(
                             text: match.group(0),
+                            data: null,
                             position: position + match.group(0).length );
 
         } else {
 
           // No function token was matched, loop through the normal token
           // regular expressions for a match, if any.
-          List<String> normalsKeys = normals.keys.toList();
 
-          for ( num i = 0; i < normalsKeys.length; i++ ) {
+          for ( num i = 0; i < normals.length; i++ ) {
 
-            String normalsKey = normalsKeys[ i ];
+            RegExp normal = normals[ i ];
 
-            match = normals[ normalsKey ].firstMatch( input );
+            match = normal.firstMatch( input );
 
             if ( match != null ) {
 
-              return new LexResult(
-                            type: normalsKey,
+              return new Token(
                             text: match.group(0),
+                            data: null,
                             position: position + match.group(0).length );
 
             }
@@ -168,7 +160,7 @@ class Lexer {
     }
 
     // TODO(adamjcook): Add method description.
-    LexResult _innerLexColor ( { int position } ) {
+    Token _innerLexColor ( { int position } ) {
 
         String input = expression.substring( position );
 
@@ -179,24 +171,19 @@ class Lexer {
 
         Match match = _cssColor.firstMatch( input );
         if ( match != null ) {
-
             // Color match found.
-            return new LexResult(
-                            type: 'color',
+            return new Token(
                             text: match.group(0),
+                            data: null,
                             position: position + match.group(0).length );
-
         } else {
-
-            // TODO(adamjcook): Add `lexer` and `positon` arguments to ParseError implementation.
             throw new ParseError( 'Invalid color' );
-
         }
 
     }
 
     // TODO(adamjcook): Add method description.
-    LexResult _innerLexSize ( { int position } ) {
+    Token _innerLexSize ( { int position } ) {
 
         String input = expression.substring( position );
 
@@ -219,12 +206,12 @@ class Lexer {
             }
 
             // TODO(adamjcook): Lexer.js has a complex object for `text` not just a String like here. Change?
-            return new LexResult(
-                            type: 'size',
-                            text: {
-                                'number': match.group(1) + match.group(2),
-                                'unit': unit },
-                            position: position + match.group(0).length );
+            return new Token(
+                          text: match.group(0),
+                          data: {
+                              'number': match.group(1) + match.group(2),
+                              'unit': unit },
+                          position: position + match.group(0).length );
 
         }
 
@@ -233,17 +220,17 @@ class Lexer {
     }
 
     // TODO(adamjcook): Add method description.
-    LexResult _innerLexWhitespace ( { int position } ) {
+    Token _innerLexWhitespace ( { int position } ) {
 
         String input = expression.substring( position );
 
         Match whitespace = _whitespaceRegex.firstMatch( input );
         position = position + whitespace.group(0).length;
 
-        return new LexResult(
-                        type: 'whitespace',
-                        text: whitespace.group(0),
-                        position: position );
+        return new Token(
+                      text: whitespace.group(0),
+                      data: null,
+                      position: position );
 
     }
 
@@ -252,39 +239,35 @@ class Lexer {
     // ===================== START PUBLIC METHODS =====================
 
     // TODO(adamjcook): Add method description.
-    LexResult lex ( { int position, String mode } ) {
-
-      LexResult returnValue;
+    Token lex ( { int position, String mode } ) {
 
         if ( mode == 'math' ) {
 
-            returnValue = _innerLex(
-                                position: position,
-                                normals: _mathNormals,
-                                ignoreWhitespace: true );
+            return _innerLex(
+                        position: position,
+                        normals: _mathNormals,
+                        ignoreWhitespace: true );
 
         } else if ( mode == 'text' ) {
 
-            returnValue = _innerLex(
-                                position: position,
-                                normals: _textNormals,
-                                ignoreWhitespace: false );
+            return _innerLex(
+                        position: position,
+                        normals: _textNormals,
+                        ignoreWhitespace: false );
 
         } else if ( mode == 'color' ) {
 
-            returnValue = _innerLexColor( position: position );
+            return _innerLexColor( position: position );
 
         } else if ( mode == 'size' ) {
 
-            returnValue = _innerLexSize( position: position );
+            return _innerLexSize( position: position );
 
         } else if ( mode == 'whitespace' ) {
 
-            returnValue = _innerLexWhitespace( position: position );
+            return _innerLexWhitespace( position: position );
 
         }
-
-      return returnValue;
 
     }
 

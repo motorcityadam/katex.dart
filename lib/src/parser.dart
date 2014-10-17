@@ -1,16 +1,16 @@
-// TODO(adamjcook): Add library description.
+// TODO(adamjcook): Add library description
 library katex.parser;
 
 import 'package:logging/logging.dart';
 
 import 'functions.dart';
 import 'lexer.dart';
-import 'lex_result.dart';
 import 'parse_error.dart';
 import 'parse_func_or_argument.dart';
 import 'parse_node.dart';
 import 'parse_result.dart';
 import 'tex_function.dart';
+import 'token.dart';
 import 'symbols.dart';
 
 
@@ -30,8 +30,8 @@ class Parser {
 		{ String expression: '',
 		  bool loggingEnabled: false } )
 	: this._init(
-		expression: expression,
-		loggingEnabled: loggingEnabled );
+      expression: expression,
+      loggingEnabled: loggingEnabled );
 
 	Parser._init(
 		{ this.expression,
@@ -47,8 +47,8 @@ class Parser {
         _logger.fine( 'Parser init :: with expression: ${ this.expression }');
 
 	    _lexer = new Lexer(
-                        expression: this.expression,
-                        loggingEnabled: this.loggingEnabled );
+                      expression: this.expression,
+                      loggingEnabled: this.loggingEnabled );
 
         _logger.fine(
                 'Parser init, Lexer created :: ' +
@@ -62,129 +62,78 @@ class Parser {
      * Checks a result to make sure it has the right type, and throws an
      * appropriate error otherwise.
      */
-    void _expect ( { LexResult result, String expected } ) {
+    void _expect ( { Token result, String expected } ) {
 
-      if ( result.type != expected ) {
+      if ( result.text != expected ) {
         throw new ParseError(
-            'Expected ' + expected + ', got ' + result.type );
+            'Expected ' + expected + ', got ' + result.text );
       }
 
     }
 
     // TODO(adamjcook): Add method description.
-    ParseResult _handleExpressionBody ( { num position,
-                                          String mode,
-                                          bool breakOnInfix: false } ) {
+    List<ParseNode> _handleInfixNodes ( { List<ParseNode> body, String mode } ) {
 
-        _logger.fine( '_handleExpressionBody() method :: called' );
+      num overIndex = -1;
+      TexFunction func;
+      String funcName;
+      ParseNode node;
 
-        List<ParseNode> body = [];
-        ParseResult atom = _parseAtom( position: position, mode: mode );
+      for ( num i = 0; i < body.length; i++ ) {
 
-        if ( loggingEnabled && atom == null ) {
+        node = body[ i ];
 
-            _logger.fine(
-                '_handleExpressionBody() method, _parseAtom returned : ' +
-                'atom returned is NULL' );
+        if ( node.type == 'infix' ) {
 
-        }
+          if ( overIndex != -1 ) {
 
-        // Keep adding atoms to the body until there are no more atoms to parse
-        // (either the end has been reached, a '}' or a '\right').
-        while ( atom != null ) {
-
-          _logger.fine(
-              '_handleExpressionBody() method, _parseAtom returned : ' +
-              'atom.position: ${ atom.position } : ' +
-              'atom.result[0].type: ${ atom.result[0].type } : ' +
-              'atom.result[0].value: ${ atom.result[0].value } : ' +
-              'atom.result[0].mode: ${ atom.result[0].mode } ' );
-
-          if ( breakOnInfix && atom.result[ 0 ].type == 'infix' ) {
-
-            break;
-
-          } else {
-
-            body.addAll( atom.result );
-            position = atom.position;
+            throw new ParseError( 'Only one infix operator allowed per group');
 
           }
 
-          atom = _parseAtom( position: position, mode: mode );
+          overIndex = i;
+          funcName = node.value[ 'replaceWith' ];
+          func = functions[ funcName ];
 
         }
 
-        return new ParseResult( result: _handleInfixNodes(
-                                          body: body,
-                                          mode: mode),
-                                position: position );
+      }
 
-    }
+      if ( overIndex != -1 ) {
 
+        ParseNode numerNode;
+        ParseNode denomNode;
 
-  // TODO(adamjcook): Add method description.
-  List<ParseNode> _handleInfixNodes ( { List<ParseNode> body, String mode } ) {
+        List<ParseNode> numerBody = body.sublist( 0, overIndex );
+        List<ParseNode> denomBody = body.sublist( overIndex + 1 );
 
-    num overIndex = -1;
-    TexFunction func;
-    String funcName;
-
-    for ( num i = 0; i < body.length; i++ ) {
-
-      ParseNode node = body[ i ];
-
-      if ( node.type == 'infix' ) {
-
-        if ( overIndex != -1 ) {
-
-          throw new ParseError( 'Only one infix operator allowed per group');
-
+        if ( numerBody.length == 1 && numerBody[ 0 ].type == 'ordgroup' ) {
+          numerNode = numerBody[ 0 ];
+        } else {
+          numerNode = new ParseNode(
+                            type: 'ordgroup', value: numerBody, mode: mode );
         }
 
-        overIndex = i;
-        funcName = node.value[ 'replaceWith' ];
-        func = functions[ funcName ];
+        if ( denomBody.length == 1 && denomBody[0].type == 'ordgroup' ) {
+          denomNode = denomBody[ 0 ];
+        } else {
+          denomNode = new ParseNode(
+                            type: 'ordgroup', value: denomBody, mode: mode );
+        }
+
+        Map<String, dynamic> value = func.handler(
+                                       funcName, numerNode, denomNode, [ 0, 0 ] );
+
+        return [ new ParseNode(
+                            type: value[ 'type' ], value: value, mode: mode ) ];
+
+      } else {
+
+        return body;
 
       }
 
     }
-
-    if ( overIndex != -1 ) {
-
-      ParseNode numerNode;
-      ParseNode denomNode;
-
-      List<ParseNode> numerBody = body.sublist( 0, overIndex );
-      List<ParseNode> denomBody = body.sublist( overIndex + 1 );
-
-      if ( numerBody.length == 1 && numerBody[ 0 ].type == 'ordgroup' ) {
-        numerNode = numerBody[ 0 ];
-      } else {
-        numerNode = new ParseNode(
-                          type: 'ordgroup', value: numerBody, mode: mode );
-      }
-
-      if ( denomBody.length == 1 && denomBody[0].type == 'ordgroup' ) {
-        denomNode = denomBody[ 0 ];
-      } else {
-        denomNode = new ParseNode(
-                          type: 'ordgroup', value: denomBody, mode: mode );
-      }
-
-      Map<String, dynamic> value = func.handler(
-                                     funcName, numerNode, denomNode, [ 0, 0 ] );
-
-      return [ new ParseNode(
-                          type: value[ 'type' ], value: value, mode: mode ) ];
-
-    } else {
-
-      return body;
-
-    }
-
-  }
 
 
     // TODO(adamjcook): Add method description.
@@ -271,10 +220,10 @@ class Parser {
         while ( true ) {
 
             // Lex the first token
-            LexResult lexResult = _lexer.lex( position: currentPosition,
-                                              mode: mode );
+            Token lexResult = _lexer.lex( position: currentPosition,
+                                          mode: mode );
 
-            if ( lexResult.type == '^' ) {
+            if ( lexResult.text == '^' ) {
 
                 // We got a superscript start
                 if ( superscript != null ) {
@@ -284,13 +233,13 @@ class Parser {
                 ParseResult result = _handleSupSubscript(
                                           position: lexResult.position,
                                           mode: mode,
-                                          symbol: lexResult.type,
+                                          symbol: lexResult.text,
                                           name: 'superscript' );
 
                 currentPosition = result.position;
                 superscript = result.result[ 0 ];
 
-            } else if ( lexResult.type == '_' ) {
+            } else if ( lexResult.text == '_' ) {
 
                 // We got a subscript start
                 if ( subscript != null ) {
@@ -300,13 +249,13 @@ class Parser {
                 ParseResult result = _handleSupSubscript(
                                         position: lexResult.position,
                                         mode: mode,
-                                        symbol: lexResult.type,
+                                        symbol: lexResult.text,
                                         name: 'subscript' );
 
                 currentPosition = result.position;
                 subscript = result.result[ 0 ];
 
-            } else if ( lexResult.type == "'" ) {
+            } else if ( lexResult.text == "'" ) {
 
                 // We got a prime
                 ParseNode prime = new ParseNode(
@@ -321,7 +270,7 @@ class Parser {
                 // Keep lexing tokens until we get something that's not a prime
                 while ( (lexResult = _lexer.lex(
                                         position: currentPosition,
-                                        mode: mode ) ).type == "'" ) {
+                                        mode: mode ) ).text == "'" ) {
 
                     // For each one, add another prime to the list
                     primes.add( prime );
@@ -368,37 +317,42 @@ class Parser {
 
 
     // TODO(adamjcook): Add method description.
-    ParseResult _parseExpression( { num position, String mode } ) {
+    ParseResult _parseExpression( { num position, String mode,
+                                    bool breakOnInfix, String breakOnToken } ) {
 
-        _logger.fine( '_parseExpression() method :: called' );
+      _logger.fine( '_parseExpression() method :: called' );
 
-        ParseResult parseResult = _handleExpressionBody(
-                                                    position: position,
-                                                    mode: mode );
+      List<ParseNode> body = [];
 
-        if ( loggingEnabled && parseResult.result.isEmpty ) {
+      // Continue adding atoms to the body [List] until atom parsing stops
+      // (parsing stops when either the end is reached, or a '}' is encountered,
+      // or a '\right' is encountered).
+      while (true) {
 
-            // TODO(adamjcook): Does this signify some type of error?
-            _logger.fine(
-                '_parseExpression() method, _handleExpressionBody returned : ' +
-                'parseResult.result returned is an EMPTY LIST' );
-
-
-        } else if ( loggingEnabled && !parseResult.result.isEmpty ) {
-
-            _logger.fine(
-                '_parseExpression() method, _handleExpressionBody returned : ' +
-                'parseResult.position: ${ parseResult.position } : ' +
-                'parseResult.result[0].type: ${ parseResult.result[0].type } : ' +
-                'parseResult.result[0].value: ${ parseResult.result[0].value } : ' +
-                'parseResult.result[0].mode: ${ parseResult.result[0].mode }' );
-
+        Token lex = _lexer.lex( position: position, mode: mode );
+        if ( breakOnToken != null && lex.text == breakOnToken ) {
+          break;
         }
 
+        ParseResult atom = _parseAtom( position: position, mode: mode );
+        if ( atom == null ) {
+          break;
+        }
 
-        return new ParseResult(
-                            result: parseResult.result,
-                            position: parseResult.position );
+        if ( breakOnInfix && atom.result[ 0 ].type == 'infix' ) {
+          break;
+        }
+
+        body.add( atom.result[ 0 ] );
+        position = atom.position;
+
+      }
+
+      return new ParseResult(
+                        result: _handleInfixNodes(
+                                          body: body,
+                                          mode: mode ),
+                        position: position );
 
     }
 
@@ -428,34 +382,66 @@ class Parser {
                 var result;
                 ParseFuncOrArgument arg;
 
-                if ( baseGroup.numArgs > 0 ) {
+                num totalArgs = baseGroup.numArgs + baseGroup.numOptionalArgs;
 
-                    num baseGreediness = functions[ baseGroup.result.result[0].type ].greediness;
+                if ( totalArgs > 0 ) {
+
+                    num baseGreediness =
+                      functions[ baseGroup.result.result[ 0 ].type ].greediness;
 
                     List args = [ funcList[0].type ];
 
                     List<int> positions = [ newPosition ];
 
-                    for ( num i = 0; i < baseGroup.numArgs; i++ ) {
+                    for ( num i = 0; i < totalArgs; i++ ) {
 
-                        if ( baseGroup.argTypes != null ) {
+                        String argType;
 
-                            arg = _parseSpecialGroup( position: newPosition,
-                                                      mode: baseGroup.argTypes[ i ],
-                                                      outerMode: mode );
+                        if ( baseGroup.argTypes == null ) {
+                          argType = null;
+                        } else {
+                          argType = baseGroup.argTypes[ i ];
+                        }
+
+                        ParseFuncOrArgument arg;
+
+                        if ( i < baseGroup.numOptionalArgs ) {
+
+                          if ( argType != null ) {
+                            arg = _parseSpecialGroup(
+                                                position: newPosition,
+                                                mode: argType,
+                                                outerMode: mode,
+                                                optional: true );
+                          } else {
+                            arg = _parseOptionalGroup(
+                                                position: newPosition,
+                                                mode: mode );
+                          }
+
+                          if ( arg == null ) {
+                            args.add( null );
+                            positions.add( newPosition );
+                            continue;
+                          }
 
                         } else {
 
-                            arg = _parseGroup( position: newPosition,
-                                               mode: mode );
+                          if ( argType != null ) {
+                            arg = _parseSpecialGroup(
+                                        position: newPosition,
+                                        mode: argType,
+                                        outerMode: mode );
+                          } else {
+                            arg = _parseGroup(
+                                        position: newPosition,
+                                        mode: mode );
+                          }
 
-                        }
-
-                        if ( arg == null ) {
-
+                          if ( arg == null ) {
                             throw new ParseError(
-                                'Expected group after ' +
-                                baseGroup.result.result.toString() );
+                                'Expected group after ' + baseGroup.result.result[ 0 ].type );
+                          }
 
                         }
 
@@ -466,8 +452,9 @@ class Parser {
                               functions[ arg.result.result[0].type ].greediness;
                             if (argGreediness > baseGreediness) {
 
-                                argNode = _parseFunction( position: newPosition,
-                                                          mode: mode );
+                                argNode = _parseFunction(
+                                                    position: newPosition,
+                                                    mode: mode );
 
                             } else {
 
@@ -528,18 +515,22 @@ class Parser {
     // TODO(adamjcook): Add method description.
   	ParseFuncOrArgument _parseGroup ( { num position, String mode } ) {
 
-      LexResult start = _lexer.lex( position: position, mode: mode );
+      Token start = _lexer.lex( position: position, mode: mode );
 
       // Try to parse an open brace
-      if ( start.type == '{' ) {
+      if ( start.text == '{' ) {
 
           // If we get a brace, parse an expression
-          ParseResult expression = _parseExpression( position: start.position,
-                                                     mode: mode );
+          ParseResult expression = _parseExpression(
+                                            position: start.position,
+                                            mode: mode,
+                                            breakOnInfix: false,
+                                            breakOnToken: '}' );
 
           // Make sure we get a close brace
-          LexResult closeBrace = _lexer.lex( position: expression.position,
-                                             mode: mode );
+          Token closeBrace = _lexer.lex( position: expression.position,
+                                         mode: mode );
+          _expect( result: closeBrace, expected: '}' );
 
           return new ParseFuncOrArgument(
               result: new ParseResult(
@@ -630,9 +621,11 @@ class Parser {
             ParseResult left = _parseFunction( position: position, mode: mode );
 
             // Parse out the implicit body
-            ParseResult body = _handleExpressionBody(
+            ParseResult body = _parseExpression(
                                         position: left.position,
-                                        mode: mode );
+                                        mode: mode,
+                                        breakOnInfix: false,
+                                        breakOnToken: '}' );
 
             // Check the next token
             ParseFuncOrArgument rightLex = _parseSymbol(
@@ -673,8 +666,11 @@ class Parser {
         } else if ( _sizeFuncs.contains( func[ 0 ].value ) ) {
 
             // If we see a sizing function, parse out the implict body
-            ParseResult body = _handleExpressionBody( position: start.result.position,
-                                                      mode: mode );
+            ParseResult body = _parseExpression(
+                                          position: start.result.position,
+                                          mode: mode,
+                                          breakOnInfix: false,
+                                          breakOnToken: '}' );
 
             return new ParseResult(
             // Figure out what size to use based on the list of functions above
@@ -690,10 +686,11 @@ class Parser {
         } else if ( _styleFuncs.contains( func[ 0 ].value ) ) {
 
             // If we see a styling function, parse out the implict body
-            ParseResult body = _handleExpressionBody(
+            ParseResult body = _parseExpression(
                                     position: start.result.position,
                                     mode: mode,
-                                    breakOnInfix: true );
+                                    breakOnInfix: true,
+                                    breakOnToken: '}' );
 
             return new ParseResult(
               // Figure out what style to use by pulling out the style from
@@ -725,43 +722,95 @@ class Parser {
         // Parse an expression.
         ParseResult expression = _parseExpression(
                                                 position: position,
-                                                mode: mode );
+                                                mode: mode,
+                                                breakOnInfix: false,
+                                                breakOnToken: null );
 
         _logger.fine(
             '_parseInput() method, _parseExpression returned :: ' +
             'expression.position: ${ expression.position }');
 
-        LexResult EOF = _lexer.lex( position: expression.position, mode: mode );
+        Token EOF = _lexer.lex( position: expression.position, mode: mode );
         _expect( result: EOF, expected: 'EOF' );
 
         return expression;
 
   	}
 
+    // TODO(adamjcook): Add method description.
+    ParseFuncOrArgument _parseOptionalGroup ( { num position, String mode } ) {
+
+      Token start = _lexer.lex( position: position, mode: mode );
+
+      // Try to parse an open bracket
+      if ( start.text == "[" ) {
+
+        // If we get a brace, parse an expression
+        var expression = _parseExpression(
+                                    position: start.position,
+                                    mode: mode,
+                                    breakOnInfix: false,
+                                    breakOnToken: ']' );
+
+        // Make sure we get a close bracket
+        var closeBracket = _lexer.lex( position: expression.position,
+                                       mode: mode);
+
+        _expect( result: closeBracket, expected: ']' );
+
+        return new ParseFuncOrArgument(
+            result: new ParseResult(
+                result: [ new ParseNode( type: 'ordgroup',
+                                         value: expression.result,
+                                         mode: mode ) ],
+                position: closeBracket.position ),
+            isFunction: false );
+
+      } else {
+
+        return null;
+
+      }
+
+    }
 
     // TODO(adamjcook): Add method description.
   	ParseFuncOrArgument _parseSpecialGroup ( { num position,
                                                String mode,
-                                               String outerMode } ) {
+                                               String outerMode,
+                                               bool optional: false } ) {
 
         if ( mode == 'color' || mode == 'size' ) {
 
             // color and size modes are special because they should have braces and
             // should only lex a single symbol inside
-            LexResult openBrace = _lexer.lex( position: position,
-                                              mode: outerMode );
+            Token openBrace = _lexer.lex( position: position,
+                                          mode: outerMode );
+            if (optional && openBrace.text != '[' ) {
+              // Optional arguments should return null if they do not exist.
+              return null;
+            }
+            _expect( result: openBrace, expected: optional ? '[' : '{' );
 
-            LexResult inner = _lexer.lex( position: openBrace.position,
-                                          mode: mode) ;
 
-            LexResult closeBrace = _lexer.lex( position: inner.position,
-                                               mode: outerMode );
+            Token inner = _lexer.lex( position: openBrace.position,
+                                      mode: mode);
+            dynamic data;
+            if ( mode == 'color' ) {
+              data = inner.text;
+            } else {
+              data = inner.data;
+            }
+
+            Token closeBrace = _lexer.lex( position: inner.position,
+                                           mode: outerMode );
+            _expect( result: closeBrace, expected: optional ? ']' : '}' );
 
             return new ParseFuncOrArgument(
                 result: new ParseResult(
-                            result: [ new ParseNode( type: 'color',
-                                                     value: inner.text,
-                                                     mode: outerMode) ],
+                            result: [ new ParseNode( type: mode,
+                                                     value: data,
+                                                     mode: outerMode ) ],
                             position: closeBrace.position ),
                 isFunction: false );
 
@@ -769,8 +818,8 @@ class Parser {
 
             // text mode is special because it should ignore the whitespace before
             // it
-            LexResult whitespace = _lexer.lex( position: position,
-                                               mode: 'whitespace' );
+            Token whitespace = _lexer.lex( position: position,
+                                           mode: 'whitespace' );
 
             return _parseGroup( position: whitespace.position, mode: mode );
 
@@ -788,11 +837,11 @@ class Parser {
 
 
 
-  		LexResult nucleus = _lexer.lex( position: position, mode: mode );
+  		Token nucleus = _lexer.lex( position: position, mode: mode );
 
-        if ( functions[ nucleus.type ] != null ) {
+        if ( functions[ nucleus.text ] != null ) {
 
-            TexFunction texFunction = functions[ nucleus.type ];
+            TexFunction texFunction = functions[ nucleus.text ];
             List<String> argTypes = texFunction.argTypes;
 
             if ( argTypes != null ) {
@@ -810,12 +859,13 @@ class Parser {
             return new ParseFuncOrArgument(
                 result: new ParseResult(
                     result: [ new ParseNode(
-                                    type: nucleus.type,
+                                    type: nucleus.text,
                                     value: nucleus.text ) ],
                     position: nucleus.position ),
                 isFunction: true,
                 isAllowedInText: texFunction.allowedInText,
                 numArgs: texFunction.numArgs,
+                numOptionalArgs: texFunction.numOptionalArgs,
                 argTypes: argTypes );
 
         } else if ( symbols[ mode ][ nucleus.text ] != null ) {

@@ -10,15 +10,14 @@ Map<String, TexFunction> functions = {
     // Normal square root.
     '\\sqrt': new TexFunction(
       numArgs: 1,
-//      numOptionalArgs: 1,
-//      handler: ( String func, ParseNode optional,
-//                 ParseNode body, List<num> positions ) {
-      handler: ( String func, ParseNode body, List<num> positions ) {
+      numOptionalArgs: 1,
+      handler: ( String func, ParseNode optional,
+                 ParseNode body, List<num> positions ) {
 
-//        if ( optional != null ) {
-//          throw new ParseError(
-//              'Optional arguments to \\sqrt are not supported' );
-//        }
+        if ( optional != null ) {
+          throw new ParseError(
+              'Optional arguments to \\sqrt are not supported' );
+        }
 
         return {
             'type': 'sqrt',
@@ -85,16 +84,20 @@ Map<String, TexFunction> functions = {
 
     // Box of the width and height.
     '\\rule': new TexFunction(
-        numArgs: 2,
-        argTypes: [ 'size', 'size' ],
-        handler: ( String func, ParseNode width,
-                   ParseNode height, List<num> positions ) {
-            return {
-                'type': 'rule',
-                'width': width.value,
-                'height': height.value
-            };
-        }
+      numArgs: 2,
+      argTypes: [ 'size', 'size', 'size' ],
+      numOptionalArgs: 1,
+      handler: ( String func, ParseNode shift, ParseNode width,
+                 ParseNode height, List<num> positions ) {
+
+        return {
+            'type': 'rule',
+            'shift': ( shift == null ) ? null : shift.value,
+            'width': width.value,
+            'height': height.value
+        };
+
+      }
     ),
 
     // A KaTeX logo
