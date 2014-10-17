@@ -30,13 +30,13 @@ class Options {
 
 	};
 
-	Options( 
+	Options(
 		{ TexStyle style,
 		  String color,
 		  String size: '',
 		  TexStyle parentStyle: null,
 		  String parentSize: '' } )
-	: this._init( 
+	: this._init(
 		style: style,
 		color: color,
 		size: size,
@@ -67,7 +67,7 @@ class Options {
 	/**
 	 * Return a new [Options] object from the base [Options] object with the
 	 * provided color.
-	 */ 
+	 */
 	Options withColor ( String color ) {
 
 		return new Options(
@@ -82,7 +82,7 @@ class Options {
 	/**
 	 * Return a new [Options] object from the base [Options] object with the
 	 * provided size.
-	 */ 
+	 */
 	Options withSize ( String size ) {
 
 		return new Options(
@@ -97,7 +97,7 @@ class Options {
 	/**
 	 * Return a new [Options] object from the base [Options] object with the
 	 * provided [TexStyle] object.
-	 */ 
+	 */
 	Options withStyle ( TexStyle style ) {
 
 		return new Options(
@@ -112,7 +112,7 @@ class Options {
 	/**
 	 * Created a new [Options] object with the same style, size and color from
 	 * the base [Options] object.
-	 */ 
+	 */
 	Options reset () {
 
 		return new Options(
@@ -126,11 +126,15 @@ class Options {
 
 	/**
 	 * Get the CSS color of the base [Options] object.
-	 */ 
+	 */
 	String getColor () {
 
-		return _colorMap[color];
-		
+    if ( _colorMap.containsKey( color ) ) {
+      return _colorMap[ color ];
+    } else {
+      return color;
+    }
+
 	}
 
 }

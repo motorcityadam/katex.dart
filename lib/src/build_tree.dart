@@ -194,7 +194,7 @@ DomNode buildGroup ( { ParseNode group, Options options, ParseNode prev } ) {
 
         // Call the groupTypes function
         TexGroup groupNode = new TexGroup(
-                                    type: group.type, 
+                                    type: group.type,
                                     group: group,
                                     options: options,
                                     prev: prev );
@@ -225,7 +225,8 @@ DomNode buildGroup ( { ParseNode group, Options options, ParseNode prev } ) {
 
     } else {
 
-        throw new ParseError( 'Recieved group of unknown type: ' + group.type );
+        throw new ParseError(
+                    message: 'Recieved group of unknown type: ' + group.type );
 
     }
 }

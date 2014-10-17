@@ -9,6 +9,10 @@ packages:
     description: barback
     source: hosted
     version: "0.15.0+1"
+  browser:
+    description: browser
+    source: hosted
+    version: "0.10.0+2"
   collection:
     description: collection
     source: hosted
