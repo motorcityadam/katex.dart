@@ -6,13 +6,21 @@ import 'dart:html';
 import 'package:logging/logging.dart';
 
 import './src/build_tree.dart';
+export './src/build_tree.dart';
+
+export './src/dom_node.dart';
+
 import './src/functions.dart';
+
 import './src/parser.dart';
+export './src/parser.dart';
 
 import './src/parse_error.dart';
 export './src/parse_error.dart';
 
 import './src/parse_node.dart';
+export './src/parse_node.dart';
+
 import './src/symbols.dart';
 
 
@@ -31,7 +39,7 @@ class Katex {
 	    if ( this.loggingEnabled == true ) {
 	      Logger.root.level = Level.ALL;
 	      Logger.root.onRecord.listen(( LogRecord rec ) {
-	        print( '${rec.level.name}: ${rec.time}: ${rec.message}' );
+	        print( '${rec.level.name}: ${rec.time}: ${rec.loggerName}: ${rec.message}' );
 	      });
 	    }
 
@@ -48,9 +56,9 @@ class Katex {
 
   		baseElement.setInnerHtml('');
 
-  		var parser = new Parser(
-  			expression: toParse,
-  			loggingEnabled: loggingEnabled );
+  		Parser parser = new Parser(
+  								expression: toParse,
+  								loggingEnabled: loggingEnabled );
 
   		List<ParseNode> tree = parser.parse();
   		SpanElement node = buildTree( tree: tree ).toNode();

@@ -19,7 +19,7 @@ import 'tex_style.dart';
  */
 Map<String, num> getMetrics ( { String symbol, String font } ) {
 
-    if ( symbols[ 'math' ][ symbol ] != null && 
+    if ( symbols[ 'math' ][ symbol ] != null &&
          symbols[ 'math' ][ symbol ].replace != '' ) {
 
         return fontMetrics.getCharacterMetrics(
@@ -68,19 +68,19 @@ SpanNode styleWrap ( { DomNode delim, TexStyle toStyle, Options options } ) {
 }
 
 /**
- * Creates a small delimiter [SpanNode]. This is a delimiter that comes in the 
+ * Creates a small delimiter [SpanNode]. This is a delimiter that comes in the
  * 'Main-Regular' font, but is re-styled to either be in 'textstyle',
  * 'scriptstyle', or 'scriptscriptstyle'.
  */
-SpanNode makeSmallDelim ( { String delim, TexStyle style, bool center, 
+SpanNode makeSmallDelim ( { String delim, TexStyle style, bool center,
                             Options options, String mode } ) {
 
-    SymbolNode text = buildCommon.makeSymbol( value: delim, 
+    SymbolNode text = buildCommon.makeSymbol( value: delim,
                                               style: 'Main-Regular',
                                               mode: mode );
 
     SpanNode span = styleWrap( delim: text,
-                               toStyle: style, 
+                               toStyle: style,
                                options: options );
 
     if ( center ) {
@@ -100,8 +100,8 @@ SpanNode makeSmallDelim ( { String delim, TexStyle style, bool center,
 }
 
 /**
- * Makes a large delimiter [SpanNode]. This is a delimiter that comes in the 
- * 'Size1', 'Size2', 'Size3', or 'Size4' fonts. It is always rendered in 
+ * Makes a large delimiter [SpanNode]. This is a delimiter that comes in the
+ * 'Size1', 'Size2', 'Size3', or 'Size4' fonts. It is always rendered in
  * 'textstyle'.
  */
 SpanNode makeLargeDelim ( { String delim, int size, bool center,
@@ -136,7 +136,7 @@ SpanNode makeLargeDelim ( { String delim, int size, bool center,
 
 /**
  * Create, return and wrap an inner span with the provided symbol and font.
- * This is used in the `makeStackedDelim` method to make the stacking pieces 
+ * This is used in the `makeStackedDelim` method to make the stacking pieces
  * for the delimiter.
  */
 Map<String, dynamic> makeInner ( { String symbol, String font, String mode } ) {
@@ -278,7 +278,7 @@ SpanNode makeStackedDelim ( { String delim, num heightTotal, bool center,
     }
 
     // Compute the real height that the delimiter will have. The real height
-    // will be, at least, the size of the top, bottom, and optional middle parts 
+    // will be, at least, the size of the top, bottom, and optional middle parts
     // combined.
     num realHeightTotal = topHeightTotal + bottomHeightTotal;
     if ( middle != null ) {
@@ -365,7 +365,7 @@ SpanNode makeStackedDelim ( { String delim, num heightTotal, bool center,
     inners.add( makeInner( symbol: top, font: font, mode: mode) );
 
     // Create the vertical list [SpanNode].
-    SpanNode inner = buildCommon.makeVerticalList( children: inners, 
+    SpanNode inner = buildCommon.makeVerticalList( children: inners,
                                                    positionType: 'bottom',
                                                    positionData: depth,
                                                    options: options );
@@ -448,7 +448,7 @@ SpanNode makeSizedDelim ( { String delim, int size,
 
     } else {
 
-        throw new ParseError( 'Illegal delimiter: ' + delim );
+        throw new ParseError( message: 'Illegal delimiter: ' + delim );
 
     }
 
@@ -559,7 +559,7 @@ Map<String, dynamic> traverseSequence ( { String delim,
 
         // Small delimiters are scaled down versions of the same font, so an
         // accounting for the style change size must be made.
- 
+
         if ( sequence[ i ][ 'type' ] == 'small' ) {
             heightDepth *= sequence[ i ][ 'style' ].sizeMultiplier;
         }
@@ -674,10 +674,10 @@ SpanNode makeLeftRightDelim ( { String delim, num height, num depth,
         // TeX but does not here, producing different results. If it is desired
         // to exactly match TeX's calculation, the following could be
         // implemented:
-        // 
+        //
         //   Math.floor(655360 * maxDistFromAxis / 500) *
         //    delimiterFactor / 655360
-        // 
+        //
         // (To see the difference, compare
         //    x^{x^{\left(\rule{0.1em}{0.68em}\right)}}
         // in TeX and katex.dart).

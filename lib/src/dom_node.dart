@@ -1,7 +1,7 @@
 /**
  * These classes store the data about the DOM nodes that are created,
- * as well as, some extra data in the form of class properties. 
- * These objects can then be transformed into real Dart-native [Elements] 
+ * as well as, some extra data in the form of class properties.
+ * These objects can then be transformed into real Dart-native [Elements]
  * toNode() method or to a HTML markup [String] representation via the
  * toMarkup() method on each class.
  */
@@ -20,8 +20,8 @@ class DomNode {
 }
 
 /**
- * A [SpanNode] represents a [SpanElement], with a class name, a list of 
- * children, and any inline styles. It also contains information about its 
+ * A [SpanNode] represents a [SpanElement], with a class name, a list of
+ * children, and any inline styles. It also contains information about its
  * height, depth, and maxFontSize.
  */
  // TODO(adamjcook): Height, depth and maxFontSize should be final?
@@ -36,13 +36,13 @@ class SpanNode extends DomNode {
 
 	Map<String, String> styles = {};
 
-	SpanNode( 
+	SpanNode(
 		{ List<String> classes: null,
 		  List<DomNode> children: null,
 		  num height: 0.0,
 		  num depth: 0.0,
 		  num maxFontSize: 0 } )
-	: this._init( 
+	: this._init(
 		classes: classes,
 		children: children,
 		height: height,
@@ -58,7 +58,7 @@ class SpanNode extends DomNode {
 
 	/**
 	 * Convert the [SpanNode] into a [SpanElement].
-	 */ 
+	 */
 	SpanElement toNode () {
 
 		SpanElement span = new SpanElement();
@@ -82,7 +82,7 @@ class SpanNode extends DomNode {
 		});
 
 		// TODO(adamjcook): Check for null hackish?
-		if ( children != null ) { 
+		if ( children != null ) {
 
 			// Append any children as HTML nodes.
 			children.forEach( ( child ) {
@@ -109,25 +109,26 @@ class SpanNode extends DomNode {
 }
 
 /**
- * A [DocumentFragmentNode] represents a [DocumentFragment], which contains 
- * [Elements], but when it is placed into the DOM it does not have any 
- * representation itself. Therefore, it only contains children and does not 
- * have any HTML properties. It also stores information about a height, depth, 
+ * A [DocumentFragmentNode] represents a [DocumentFragment], which contains
+ * [Elements], but when it is placed into the DOM it does not have any
+ * representation itself. Therefore, it only contains children and does not
+ * have any HTML properties. It also stores information about a height, depth,
  * and maxFontSize.
  */
+// TODO(adamjcook): Height, depth and maxFontSize should be final?
 class DocumentFragmentNode extends DomNode {
 
 	final List<DomNode> children;
-	final num height;
-	final num depth;
-	final num maxFontSize;
+	num height;
+	num depth;
+	num maxFontSize;
 
-	DocumentFragmentNode( 
+	DocumentFragmentNode(
 		{ List<DomNode> children: null,
 		  num height: 0.0,
 		  num depth: 0.0,
 		  num maxFontSize: 0 } )
-	: this._init( 
+	: this._init(
 		children: children,
 		height: height,
 		depth: depth,
@@ -142,7 +143,7 @@ class DocumentFragmentNode extends DomNode {
 	/**
 	 * Convert the [DocumentFragmentNode] into an [DocumentFragment].
 	 * The [DocumentFragment] class is Dart-native.
-	 */ 
+	 */
 	DocumentFragment toNode () {
 
 		DocumentFragment documentFragment = new DocumentFragment();
@@ -179,7 +180,7 @@ class DocumentFragmentNode extends DomNode {
 
 /**
  * A [SymbolNode] contains information about a single symbol. It renders
- * to a [SpanElement] with a text node within it. Any CSS classes, styles, or 
+ * to a [SpanElement] with a text node within it. Any CSS classes, styles, or
  * italic corrections are applied.
  */
   // TODO(adamjcook): italic, height, depth and maxFontSize properties should be final?
@@ -195,7 +196,7 @@ class SymbolNode extends DomNode {
 
 	Map<String, String> styles = {};
 
-	SymbolNode( 
+	SymbolNode(
 		{ String value: '',
 		  num height: 0.0,
 		  num depth: 0.0,
@@ -203,7 +204,7 @@ class SymbolNode extends DomNode {
 		  num skew: 0.0,
 		  List<String> classes: null,
 		  num maxFontSize: 0 } )
-	: this._init( 
+	: this._init(
 		value: value,
 		height: height,
 		depth: depth,
@@ -252,7 +253,7 @@ class SymbolNode extends DomNode {
 			span.style.setProperty( propery, value );
 
 		});
-	    
+
 	    // Append text to [SpanElement].
 	    span.appendText( value );
 

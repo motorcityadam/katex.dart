@@ -12,7 +12,7 @@ import 'symbols.dart';
 
 /**
  * Creates a [SymbolNode] after translation via the [List] of symbols in found
- * in katex.symbols library. Correctly extracts the metrics for the character, 
+ * in katex.symbols library. Correctly extracts the metrics for the character,
  * and optionally, takes a [List] of classes to be attached to the node.
  */
 SymbolNode makeSymbol ( { String value, String style, String mode,
@@ -21,7 +21,7 @@ SymbolNode makeSymbol ( { String value, String style, String mode,
     SymbolNode symbolNode;
 
     // Replace the value with its replaced value from symbol.js
-    if ( symbols[ mode ][ value ] != null && 
+    if ( symbols[ mode ][ value ] != null &&
          symbols[mode][value].replace != '' ) {
 
         value = symbols[ mode ][ value ].replace;
@@ -69,7 +69,7 @@ SymbolNode makeSymbol ( { String value, String style, String mode,
 /**
  * Returns a [SymbolNode] using the italic math font.
  */
-SymbolNode makeSymbolItalic ( { String value, String mode, 
+SymbolNode makeSymbolItalic ( { String value, String mode,
                                 String color, List<String> classes } ) {
 
     classes.add( 'mathit' );
@@ -169,12 +169,12 @@ SpanNode makeSpan ( { List<String> classes, List<DomNode> children,
 }
 
 /**
- * Returns a [DocumentFragmentNode] containing the provided list of [DomNode] 
+ * Returns a [DocumentFragmentNode] containing the provided list of [DomNode]
  * children.
  */
 DocumentFragmentNode makeFragment ( { List<DomNode> children } ) {
 
-    DocumentFragmentNode documentFragmentNode = 
+    DocumentFragmentNode documentFragmentNode =
         new DocumentFragmentNode( children: children );
 
     sizeElementFromChildren( documentFragmentNode );
@@ -206,19 +206,19 @@ SpanNode makeFontSizer ( { Options options, num fontSize } ) {
 }
 
 /**
- * Creates a vertical list [SpanNode] by stacking other [SpanNode] elements 
- * and kerns on top of each other. Allows for many different schemes of 
+ * Creates a vertical list [SpanNode] by stacking other [SpanNode] elements
+ * and kerns on top of each other. Allows for many different schemes of
  * specifying the positioning method.
  *
  * Arguments:
- * 
+ *
  *  - children: A list of child or kern nodes to be stacked on top of each other
  *              (i.e. the first element will be at the bottom, and the last at
  *              the top). Element nodes are specified as
  *                { 'type': 'elem', 'elem': node }
  *              while kern nodes are specified as
  *                { 'type': 'kern', 'size': size }
- * 
+ *
  *  - positionType: The method by which the vertical list should be positioned.
  *                  Valid values are:
  *                   - 'individualShift': The children list only contains elem
@@ -228,31 +228,31 @@ SpanNode makeFontSizer ( { Options options, num fontSize } ) {
  *                                        moving downwards). positionData is
  *                                        ignored.
  *                   - 'top': The positionData specifies the topmost point of
- *                            the vertical list (note this is expected to be a 
+ *                            the vertical list (note this is expected to be a
  *                            height, so positive values will move up)
  *                   - 'bottom': The positionData specifies the bottommost point
  *                               of the vertical list (note this is expected to
  *                               be a depth, so positive values will move down.
  *                   - 'shift': The vertical list will be positioned such that
- *                              its baseline is positionData away from the 
- *                              baseline of the first child. Positive values 
+ *                              its baseline is positionData away from the
+ *                              baseline of the first child. Positive values
  *                              move downwards.
- *                   - 'firstBaseline': The vertical list will be positioned 
+ *                   - 'firstBaseline': The vertical list will be positioned
  *                                      such that its baseline is aligned with
  *                                      the baseline of the first child.
  *                                      positionData is ignored. (this is
  *                                      equivalent to 'shift' with
  *                                      positionData=0)
- * 
- *  - positionData: Data used in different ways depending on the value of 
+ *
+ *  - positionData: Data used in different ways depending on the value of
  *                  positionType.
- * 
+ *
  *  - options: [Options] object.
  *
  */
  // TODO(adamjcook): Refactor this - especially the type associated with the `children` argument. Messy for Dart.
 SpanNode makeVerticalList ( { List<Map<String, dynamic>> children,
-                              String positionType, 
+                              String positionType,
                               num positionData,
                               Options options } ) {
 
@@ -296,7 +296,7 @@ SpanNode makeVerticalList ( { List<Map<String, dynamic>> children,
             if (children[ i ][ 'type' ] == 'kern') {
                 bottom -= children[ i ][ 'size' ];
             } else {
-                bottom -= children[ i ][ 'elem' ].height + 
+                bottom -= children[ i ][ 'elem' ].height +
                     children[ i ][ 'elem' ].depth;
             }
 
@@ -350,25 +350,25 @@ SpanNode makeVerticalList ( { List<Map<String, dynamic>> children,
 
         } else {
 
-            SpanNode child = children[ i ][ 'elem' ];
+          DomNode child = children[ i ][ 'elem' ];
 
-            num shift = -child.depth - currentPosition;
-            currentPosition += child.height + child.depth;
+          num shift = -child.depth - currentPosition;
+          currentPosition += child.height + child.depth;
 
-            SpanNode childWrap = makeSpan( classes: [],
-                                           children: [ fontSizer, child ] );
+          SpanNode childWrap = makeSpan( classes: [],
+                                         children: [ fontSizer, child ] );
 
-            childWrap.height -= shift;
-            childWrap.depth += shift;
-            childWrap.styles[ 'top' ] = shift.toString() + 'em';
+          childWrap.height -= shift;
+          childWrap.depth += shift;
+          childWrap.styles[ 'top' ] = shift.toString() + 'em';
 
-            realChildren.add( childWrap );
+          realChildren.add( childWrap );
 
         }
 
     }
 
-    // Add in an [SpanNode] element at the end with no offset to fix the 
+    // Add in an [SpanNode] element at the end with no offset to fix the
     // calculation of baselines in some browsers (for example, IE and Safari).
     SpanNode baselineFix = makeSpan( classes: [ 'baseline-fix' ],
                                      children: [ fontSizer,
@@ -381,7 +381,7 @@ SpanNode makeVerticalList ( { List<Map<String, dynamic>> children,
     // Fix the final height and depth, in the case that there were kerns at
     // the either of the ends. The makeSpan function will not take this into
     // account so the adjustment is computed here.
-    verticalListSpan.height = 
+    verticalListSpan.height =
         Math.max( currentPosition, verticalListSpan.height );
 
     verticalListSpan.depth =
