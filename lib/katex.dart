@@ -48,23 +48,38 @@ class Katex {
 
   	}
 
-	/**
-	 * Parse the raw [String] and build a formatted mathematical expression. The
-	 * resulting expression is placed in the [Element] provided.
-	 */
-  	void render ( String toParse, Element baseElement ) {
+  /**
+   * Parse the raw [String] and build a formatted mathematical expression. The
+   * resulting expression is placed in the [Element] provided.
+   */
+  void render ( String toParse, Element baseElement ) {
 
-  		baseElement.setInnerHtml('');
+    baseElement.setInnerHtml('');
 
-  		Parser parser = new Parser(
-  								expression: toParse,
-  								loggingEnabled: loggingEnabled );
+    Parser parser = new Parser(
+                expression: toParse,
+                loggingEnabled: loggingEnabled );
 
-  		List<ParseNode> tree = parser.parse();
-  		SpanElement node = buildTree( tree: tree ).toNode();
+    List<ParseNode> tree = parser.parse();
+    SpanElement node = buildTree( tree: tree ).toNode();
 
-  		baseElement.append( node );
+    baseElement.append( node );
 
-  	}
+  }
+
+  /**
+   * Parse and build the expression, and return the HTML markup [String]
+   * representation.
+   */
+  String renderToString ( String toParse ) {
+
+    Parser parser = new Parser(
+        expression: toParse,
+        loggingEnabled: loggingEnabled );
+
+    List<ParseNode> tree = parser.parse();
+    return buildTree( tree: tree ).toMarkup();
+
+  }
 
 }
