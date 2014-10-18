@@ -13,6 +13,7 @@ Please see the sections below for more information on contributions.
  - [Submission Guidelines](#submissions)
  - [Code Style Guidelines](#style)
  - [Testing](#testing)
+ - [Benchmarking](#benchmarking)
  - [Commit Message Guidelines](#commits)
 
 ## <a name="questions"></a> Questions
@@ -171,7 +172,7 @@ When a change occurs, the results of the testing process should be displayed in 
 
 To run the tests without keeping the Karma server running (single-run mode), run the following command in the root of the repository:
 
-    grunt karma:continuous
+    make test
 
 This command will start the Karma server, open Dartium, execute the unit tests, close Dartium and kill the Karma server.
 
@@ -184,6 +185,22 @@ Please set the `DARTIUM_BIN` environment variable in your `~/.bashrc` or `~/.bas
     export DARTIUM_BIN=~/dev/dart/chromium/Chromium.app/Contents/MacOS/Chromium
 
 Where `/dev/dart` may depend on where your installation of the Dart SDK is on your system.
+
+## <a name="benchmarking"></a> Benchmarking
+
+During or after a major code refactoring, it is encouraged to run a performance benchmark before and after the said modifications.
+
+To run the benchmark harness, run the following command from the repository root of the project:
+
+    make benchmark
+
+After the command completes, visit the following address in a web browser of choice:
+
+    http://localhost:8080
+
+The benchmark code will be executed 10 times and the resulting "time per execution" will display in the browser console (in microseconds).
+
+Please note that only the Dartium web browser that ships with the Dart SDK can run the benchmark harness.
 
 ## <a name="commits"></a> Commit Message Guidelines
 

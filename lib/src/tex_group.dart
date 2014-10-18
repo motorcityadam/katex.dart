@@ -890,7 +890,7 @@ class TexGroup {
             // First, we do the same steps as in overline to build the inner group
             // and line
             DomNode inner = buildGroup(
-                                group: group.value.body,
+                                group: group.value[ 'body' ],
                                 options: options.withStyle(
                                                     options.style.cramp() ) );
 

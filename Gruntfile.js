@@ -16,7 +16,7 @@ module.exports = function( grunt ) {
         configFile: 'karma.conf.js',
         singleRun: true,
         browsers: ['Dartium']
-      },
+      }
     },
 
     watch: {
@@ -35,5 +35,7 @@ module.exports = function( grunt ) {
 
   grunt.registerTask( 'default', [ 'karma:unit:start',
                                    'watch' ] );
+
+  grunt.registerTask( 'test', [ 'karma:continuous' ] );
 
 };
