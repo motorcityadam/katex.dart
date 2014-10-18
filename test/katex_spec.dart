@@ -1452,20 +1452,21 @@ main() {
 
   });
 
-  // TODO(adamjcook): Implement this test.
-//  group( 'A markup generator', () {
-//
-//    test( 'marks trees up', () {
-//
-//      var markup = katex.renderToString('\\sigma^2');
-//      expect(markup.indexOf('<span')).toBe(0);
-//      expect(markup).toContain('\u03c3');  // sigma
-//      expect(markup).toContain('margin-right');
-//      expect(markup).not.toContain('marginRight');
-//
-//    });
-//
-//  });
+  group( 'A markup generator', () {
+
+    test( 'marks trees up', () {
+
+      Katex katex = new Katex();
+      String markup = katex.renderToString( '\\sigma^2' );
+
+      expect( markup.indexOf( '<span' ), 0 );
+      expect( markup.contains( '\u03c3' ), isTrue );
+      expect( markup.contains( 'margin-right' ), isTrue );
+      expect( markup.contains( 'marginRight' ), isFalse );
+
+    });
+
+  });
 
   group( 'An accent parser', () {
 

@@ -77,30 +77,16 @@ class TexGroup {
          */
         bool shouldHandleSupSub ( { ParseNode group, Options options } ) {
 
-            bool returnValue;
-
             if ( group == null ) {
-
-                returnValue = false;
-
+                return false;
             } else if ( group.type == 'op' ) {
-
-                // Operators handle supsubs differently when they have limits
-                // (e.g. `\displaystyle\sum_2^3`)
-                returnValue =
-                    group.value.limits && options.style.size == styles.DISPLAY.size;
-
+                return group.value.limits &&
+                       options.style.size == styles.DISPLAY.size;
             } else if ( group.type == 'accent' ) {
-
-                returnValue = isCharacterBox( group: group.value[ 'base' ] );
-
+                return isCharacterBox( group: group.value[ 'base' ] );
             } else {
-
-                returnValue = null;
-
+                return false;
             }
-
-            return returnValue;
 
         }
 
@@ -245,8 +231,6 @@ class TexGroup {
                                      options: options ) ) {
 
               type = group.value[ 'base' ].type;
-//                groupTypeFunc = groupTypes[ group.value[ 'base' ].type ];
-//                value = Function.apply( groupTypeFunc.handler, [ group, options, prev ] );
 
             }
 
