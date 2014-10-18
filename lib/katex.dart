@@ -2,6 +2,7 @@
 library katex;
 
 import 'dart:html';
+import 'dart:js' as js;
 
 import 'package:logging/logging.dart';
 
@@ -81,5 +82,27 @@ class Katex {
     return buildTree( tree: tree ).toMarkup();
 
   }
+
+}
+
+main() {
+
+  Katex katex;
+
+  void init( { loggingEnabled: false } ) {
+    katex = new Katex( loggingEnabled: loggingEnabled );
+  }
+
+  void render( String toParse, Element baseElement ) {
+    katex.render( toParse, baseElement );
+  }
+
+  String renderToString ( String toParse ) {
+    return renderToString( toParse );
+  }
+
+  js.context[ 'init' ] = init;
+  js.context[ 'render' ] = render;
+  js.context[ 'renderToString' ] = renderToString;
 
 }

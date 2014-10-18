@@ -1,6 +1,7 @@
 build/
 packages/
 node_modules/
+.pub
 *.dart.js
 *.dart.precompiled.js
 *.js_

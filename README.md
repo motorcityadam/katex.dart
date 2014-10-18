@@ -38,6 +38,11 @@ Server-side rendering is not yet supported, but it is planned.
 
 Please visit the [demonstration application](http://katex-dart-demo.appspot.com/).
 
+## Performance Benchmarks
+
+* [KaTeX.js versus MathJAX](http://jsperf.com/katex-vs-mathjax/)
+* [katex.dart versus KaTeX.js](http://jsperf.com/katex-dart-vs-katex)
+
 ## Usage
 
 Include the `main.dart` and `katex.min.css` files on the page.
@@ -74,13 +79,13 @@ TODO
 
 To run the example application, run the following command from the repository root of the project:
 
-    pub serve
+    make serve
 
 After the command completes, visit the following address in a web browser of choice:
 
-`http://localhost:8080`
+    http://localhost:8080
 
-Please note that the Dartium web browser that ships with the Dart SDK can run the Dart code natively (as it includes the Dart VM), but that all other browsers must have the Dart code transpiled to JavaScript. When using the `pub serve` command, the Dart2JS compiler included with the Dart SDK performs the transpiling automatically. However, there may be some noticable "lag" in loading the example application while the Dart code is being transformed.
+Please note that the Dartium web browser that ships with the Dart SDK can run the Dart code natively (as it includes the Dart VM), but that all other browsers must have the Dart code transpiled to JavaScript. When using the `make serve` command, the Dart2JS compiler included with the Dart SDK performs the transpiling automatically. However, there may be some noticable "lag" in loading the example application while the Dart code is being transformed.
 
 ## Contributing
 

@@ -9,6 +9,10 @@ packages:
     description: barback
     source: hosted
     version: "0.15.0+1"
+  benchmark_harness:
+    description: benchmark_harness
+    source: hosted
+    version: "1.0.4"
   browser:
     description: browser
     source: hosted
