@@ -36,7 +36,7 @@ Server-side rendering is not yet supported, but it is planned.
 
 ## Demonstration Application and Benchmarks
 
-TODO
+Please visit the [demonstration application](http://katex-dart-demo.appspot.com/).
 
 ## Usage
 
